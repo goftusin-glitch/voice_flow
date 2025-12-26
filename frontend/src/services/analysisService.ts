@@ -1,0 +1,48 @@
+import { apiClient } from './api';
+import {
+  UploadAudioResponse,
+  AnalyzeResponse,
+  FinalizeRequest,
+  FinalizeResponse,
+} from '../types/analysis';
+
+class AnalysisService {
+  async uploadAudio(audioFile: File, templateId: number): Promise<UploadAudioResponse> {
+    const formData = new FormData();
+    formData.append('audio_file', audioFile);
+    formData.append('template_id', templateId.toString());
+
+    const response = await apiClient.post<UploadAudioResponse>(
+      '/analysis/upload-audio',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    return response.data;
+  }
+
+  async analyzeCall(analysisId: number): Promise<AnalyzeResponse> {
+    const response = await apiClient.post<AnalyzeResponse>('/analysis/analyze', {
+      analysis_id: analysisId,
+    });
+
+    return response.data;
+  }
+
+  async finalizeAnalysis(data: FinalizeRequest): Promise<FinalizeResponse> {
+    const response = await apiClient.post<FinalizeResponse>('/analysis/finalize', data);
+
+    return response.data;
+  }
+
+  async getAnalysisHistory(): Promise<any> {
+    const response = await apiClient.get('/analysis/history');
+    return response.data;
+  }
+}
+
+export const analysisService = new AnalysisService();

@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: voice_flow_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-change_this_password}
+      MYSQL_DATABASE: voice_flow
+      MYSQL_USER: voiceflow
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-change_this_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - voice_flow_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: voice_flow_backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=mysql+pymysql://voiceflow:${MYSQL_PASSWORD:-change_this_password}@mysql:3306/voice_flow
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend/generated:/app/generated
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - voice_flow_network
+    command: >
+      sh -c "
+        flask db upgrade &&
+        gunicorn --bind 0.0.0.0:5000 --workers 4 --timeout 300 run:app
+      "
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://backend.localuae.com/api
+    container_name: voice_flow_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - voice_flow_network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: voice_flow_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - voice_flow_network
+
+  # Certbot for SSL
+  certbot:
+    image: certbot/certbot
+    container_name: voice_flow_certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  voice_flow_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
