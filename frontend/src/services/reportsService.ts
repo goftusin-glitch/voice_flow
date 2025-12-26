@@ -52,19 +52,48 @@ class ReportsService {
   }
 
   async downloadPDF(reportId: number): Promise<void> {
-    const response = await apiClient.get(`/reports/${reportId}/download-pdf`, {
-      responseType: 'blob',
-    });
+    try {
+      const response = await apiClient.get(`/reports/${reportId}/download-pdf`, {
+        responseType: 'blob',
+      });
 
-    // Create download link
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `report_${reportId}.pdf`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
+      // Check if response is actually a PDF
+      const contentType = response.headers['content-type'];
+      if (contentType && !contentType.includes('application/pdf')) {
+        // If it's JSON, it's likely an error response
+        const text = await response.data.text();
+        const errorData = JSON.parse(text);
+        throw new Error(errorData.message || 'Failed to download PDF');
+      }
+
+      // Get filename from Content-Disposition header if available
+      let filename = `report_${reportId}.pdf`;
+      const contentDisposition = response.headers['content-disposition'];
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      // Create download link
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      setTimeout(() => {
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }, 100);
+    } catch (error: any) {
+      console.error('PDF download error:', error);
+      throw error;
+    }
   }
 
   async shareViaEmail(reportId: number, data: ShareEmailRequest): Promise<void> {

@@ -240,24 +240,39 @@ def download_pdf(current_user, report_id):
         # Generate PDF
         pdf_path = PDFService.generate_report_pdf(report_data)
 
-        # Send file
+        # Verify file exists
+        if not os.path.exists(pdf_path):
+            raise ValueError(f"Generated PDF file not found: {pdf_path}")
+
+        # Get report title for filename
+        report_title = report_data.get('title', f'report_{report_id}')
+        # Sanitize filename
+        safe_title = "".join(c for c in report_title if c.isalnum() or c in (' ', '-', '_')).rstrip()
+        filename = f"{safe_title}.pdf" if safe_title else f"report_{report_id}.pdf"
+
+        print(f"Sending PDF file: {pdf_path} as {filename}")
+
+        # Send file with proper headers
         return send_file(
             pdf_path,
             mimetype='application/pdf',
             as_attachment=True,
-            download_name=f"report_{report_id}.pdf"
+            download_name=filename
         )
 
     except ValueError as e:
+        print(f"ValueError downloading PDF: {str(e)}")
         return jsonify({
             'success': False,
             'message': str(e)
         }), 404
     except Exception as e:
         print(f"Error downloading PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'success': False,
-            'message': 'Failed to download PDF'
+            'message': f'Failed to download PDF: {str(e)}'
         }), 500
 
 
