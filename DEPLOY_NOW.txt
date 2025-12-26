@@ -1,0 +1,257 @@
+╔════════════════════════════════════════════════════════════════╗
+║    VOICE FLOW - QUICK PRODUCTION DEPLOYMENT                    ║
+║    Copy and paste these commands in order                      ║
+╚════════════════════════════════════════════════════════════════╝
+
+SERVER: 72.61.244.159
+USER: root
+PASSWORD: Eagles@121295
+
+═══════════════════════════════════════════════════════════════════
+STEP 1: Connect to Server
+═══════════════════════════════════════════════════════════════════
+
+Open PowerShell or Git Bash and run:
+
+ssh root@72.61.244.159
+
+When prompted for password, enter: Eagles@121295
+
+═══════════════════════════════════════════════════════════════════
+STEP 2: Run Auto-Deploy Command (ONE LINE!)
+═══════════════════════════════════════════════════════════════════
+
+Once connected to the server, paste this ENTIRE command:
+
+bash <(curl -s https://raw.githubusercontent.com/goftusin-glitch/voice_flow/master/deploy.sh 2>/dev/null || wget -qO- https://raw.githubusercontent.com/goftusin-glitch/voice_flow/master/deploy.sh 2>/dev/null || cat << 'DEPLOY_END'
+#!/bin/bash
+set -e
+echo "Starting Voice Flow Deployment..."
+apt update && apt upgrade -y
+curl -fsSL https://get.docker.com -o get-docker.sh && sh get-docker.sh && rm get-docker.sh
+apt install docker-compose git -y
+cd /opt && rm -rf voice_flow && git clone https://github.com/goftusin-glitch/voice_flow.git && cd voice_flow
+cat > .env << 'EOF'
+MYSQL_ROOT_PASSWORD=VoiceFlow_Prod_Root_2024_SecurePass!
+MYSQL_PASSWORD=VoiceFlow_Prod_User_2024_SecurePass!
+EOF
+SECRET_KEY=$(openssl rand -hex 32)
+JWT_SECRET_KEY=$(openssl rand -hex 32)
+cat > backend/.env << EOF
+SECRET_KEY=${SECRET_KEY}
+FLASK_ENV=production
+FLASK_DEBUG=False
+DATABASE_URL=mysql+pymysql://voiceflow:VoiceFlow_Prod_User_2024_SecurePass!@mysql:3306/voice_flow
+JWT_SECRET_KEY=${JWT_SECRET_KEY}
+OPENAI_API_KEY=REPLACE_WITH_YOUR_KEY
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=True
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+FRONTEND_URL=https://localuae.com
+EOF
+mkdir -p certbot/conf certbot/www backend/uploads/audio backend/generated/pdfs
+apt install ufw -y && ufw --force enable && ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp
+cp nginx/conf.d/voice_flow.conf nginx/conf.d/voice_flow.conf.backup
+cat > nginx/conf.d/voice_flow.conf << 'NGINX_EOF'
+server {
+    listen 80;
+    server_name backend.localuae.com;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / {
+        proxy_pass http://backend:5000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        client_max_body_size 500M;
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }
+}
+server {
+    listen 80;
+    server_name localuae.com www.localuae.com;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / {
+        proxy_pass http://frontend:80;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+NGINX_EOF
+echo "Building Docker containers (5-10 minutes)..."
+docker-compose build --no-cache && docker-compose up -d
+echo "Waiting for services..."
+sleep 30
+echo "═══════════════════════════════════"
+echo "DEPLOYMENT COMPLETE!"
+echo "═══════════════════════════════════"
+docker-compose ps
+echo ""
+echo "Server IP: $(curl -s ifconfig.me 2>/dev/null)"
+echo "Access: http://$(curl -s ifconfig.me 2>/dev/null)"
+echo ""
+echo "IMPORTANT: Edit /opt/voice_flow/backend/.env"
+echo "Add your OpenAI API key and email credentials"
+DEPLOY_END
+)
+
+═══════════════════════════════════════════════════════════════════
+STEP 3: Configure API Keys
+═══════════════════════════════════════════════════════════════════
+
+After deployment completes, edit the configuration file:
+
+nano /opt/voice_flow/backend/.env
+
+Replace these values:
+- OPENAI_API_KEY=REPLACE_WITH_YOUR_KEY  →  Your actual OpenAI API key
+- MAIL_USERNAME=your-email@gmail.com  →  Your Gmail address
+- MAIL_PASSWORD=your-app-password  →  Your Gmail app password
+
+Save: Ctrl+X, then Y, then Enter
+
+Then restart backend:
+
+cd /opt/voice_flow && docker-compose restart backend
+
+═══════════════════════════════════════════════════════════════════
+STEP 4: Verify Deployment
+═══════════════════════════════════════════════════════════════════
+
+Check container status:
+
+docker-compose ps
+
+View logs:
+
+docker-compose logs -f
+
+(Press Ctrl+C to exit logs)
+
+═══════════════════════════════════════════════════════════════════
+STEP 5: Access Your Application
+═══════════════════════════════════════════════════════════════════
+
+Open in browser:
+- http://72.61.244.159  (Frontend)
+- http://72.61.244.159:5000  (Backend API)
+
+After configuring DNS:
+- http://localuae.com
+- http://backend.localuae.com
+
+═══════════════════════════════════════════════════════════════════
+STEP 6: Configure DNS (IMPORTANT!)
+═══════════════════════════════════════════════════════════════════
+
+Go to your domain registrar and add these A records:
+
+Domain: localuae.com
+Type: A
+Value: 72.61.244.159
+
+Domain: www.localuae.com
+Type: A
+Value: 72.61.244.159
+
+Domain: backend.localuae.com
+Type: A
+Value: 72.61.244.159
+
+Wait 5-60 minutes for DNS to propagate.
+
+═══════════════════════════════════════════════════════════════════
+STEP 7: Enable HTTPS (After DNS Works)
+═══════════════════════════════════════════════════════════════════
+
+Once DNS is working, run these commands:
+
+cd /opt/voice_flow
+docker-compose stop nginx
+
+docker run -it --rm \
+  -v /opt/voice_flow/certbot/conf:/etc/letsencrypt \
+  -v /opt/voice_flow/certbot/www:/var/www/certbot \
+  -p 80:80 \
+  certbot/certbot certonly --standalone \
+  --email your-email@gmail.com \
+  --agree-tos \
+  --no-eff-email \
+  -d localuae.com \
+  -d www.localuae.com
+
+docker run -it --rm \
+  -v /opt/voice_flow/certbot/conf:/etc/letsencrypt \
+  -v /opt/voice_flow/certbot/www:/var/www/certbot \
+  -p 80:80 \
+  certbot/certbot certonly --standalone \
+  --email your-email@gmail.com \
+  --agree-tos \
+  --no-eff-email \
+  -d backend.localuae.com
+
+cp nginx/conf.d/voice_flow.conf.backup nginx/conf.d/voice_flow.conf
+docker-compose start nginx
+docker-compose restart
+
+═══════════════════════════════════════════════════════════════════
+USEFUL COMMANDS
+═══════════════════════════════════════════════════════════════════
+
+View logs:
+cd /opt/voice_flow && docker-compose logs -f
+
+Restart services:
+docker-compose restart
+
+Stop everything:
+docker-compose down
+
+Start everything:
+docker-compose up -d
+
+Check status:
+docker-compose ps
+
+Update code:
+git pull origin master && docker-compose down && docker-compose build && docker-compose up -d
+
+═══════════════════════════════════════════════════════════════════
+TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════
+
+If containers won't start:
+docker-compose logs
+
+If backend has errors:
+docker-compose logs backend
+
+If you need to reset database:
+docker-compose down -v && docker-compose up -d
+
+═══════════════════════════════════════════════════════════════════
+DEPLOYMENT CHECKLIST
+═══════════════════════════════════════════════════════════════════
+
+[  ] Connected to server (Step 1)
+[  ] Ran auto-deploy command (Step 2)
+[  ] Configured API keys in backend/.env (Step 3)
+[  ] Verified containers are running (Step 4)
+[  ] Tested HTTP access (Step 5)
+[  ] Configured DNS records (Step 6)
+[  ] Enabled HTTPS/SSL (Step 7)
+[  ] Created first admin user
+
+═══════════════════════════════════════════════════════════════════
+
+🎉 DEPLOYMENT COMPLETE! Your Voice Flow app is now live!
+
+Support: See PRODUCTION_DEPLOYMENT_STEPS.md for detailed instructions
+
+═══════════════════════════════════════════════════════════════════
