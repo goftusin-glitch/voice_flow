@@ -110,11 +110,11 @@ export const MyReports: React.FC = () => {
 
   const handleDownloadPDF = async (reportId: number) => {
     try {
-      toast.loading('Generating PDF...', { id: 'pdf' });
+      toast.info('Generating PDF...');
       await reportsService.downloadPDF(reportId);
-      toast.success('PDF downloaded successfully', { id: 'pdf' });
+      toast.success('PDF downloaded successfully');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to download PDF', { id: 'pdf' });
+      toast.error(error.response?.data?.message || 'Failed to download PDF');
     }
   };
 
