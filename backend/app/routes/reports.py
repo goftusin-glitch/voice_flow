@@ -186,13 +186,27 @@ def delete_report(current_user, report_id):
 def generate_pdf(current_user, report_id):
     """Generate PDF for a report"""
     try:
-        team_id = get_user_team_id(current_user.id)
+        # Get the report first to check its team
+        from app.models.report import Report
+        report = Report.query.get(report_id)
+
+        if not report:
+            raise ValueError("Report not found")
+
+        # Check if user is a member of the report's team
+        member = TeamMember.query.filter_by(
+            user_id=current_user.id,
+            team_id=report.team_id
+        ).first()
+
+        if not member:
+            raise ValueError("You don't have access to this report")
 
         # Get report data
         report_data = ReportService.get_report_by_id(
             report_id=report_id,
             user_id=current_user.id,
-            team_id=team_id
+            team_id=report.team_id
         )
 
         # Generate PDF
@@ -228,13 +242,27 @@ def generate_pdf(current_user, report_id):
 def download_pdf(current_user, report_id):
     """Download PDF for a report"""
     try:
-        team_id = get_user_team_id(current_user.id)
+        # Get the report first to check its team
+        from app.models.report import Report
+        report = Report.query.get(report_id)
+
+        if not report:
+            raise ValueError("Report not found")
+
+        # Check if user is a member of the report's team
+        member = TeamMember.query.filter_by(
+            user_id=current_user.id,
+            team_id=report.team_id
+        ).first()
+
+        if not member:
+            raise ValueError("You don't have access to this report")
 
         # Get report data
         report_data = ReportService.get_report_by_id(
             report_id=report_id,
             user_id=current_user.id,
-            team_id=team_id
+            team_id=report.team_id
         )
 
         # Generate PDF
@@ -281,7 +309,22 @@ def download_pdf(current_user, report_id):
 def share_email(current_user, report_id):
     """Share report via email"""
     try:
-        team_id = get_user_team_id(current_user.id)
+        # Get the report first to check its team
+        from app.models.report import Report
+        report = Report.query.get(report_id)
+
+        if not report:
+            raise ValueError("Report not found")
+
+        # Check if user is a member of the report's team
+        member = TeamMember.query.filter_by(
+            user_id=current_user.id,
+            team_id=report.team_id
+        ).first()
+
+        if not member:
+            raise ValueError("You don't have access to this report")
+
         data = request.get_json()
 
         # Validate recipients
@@ -296,7 +339,7 @@ def share_email(current_user, report_id):
         report_data = ReportService.get_report_by_id(
             report_id=report_id,
             user_id=current_user.id,
-            team_id=team_id
+            team_id=report.team_id
         )
 
         # Generate PDF
@@ -337,13 +380,27 @@ def share_email(current_user, report_id):
 def share_whatsapp(current_user, report_id):
     """Get WhatsApp share link for a report"""
     try:
-        team_id = get_user_team_id(current_user.id)
+        # Get the report first to check its team
+        from app.models.report import Report
+        report = Report.query.get(report_id)
+
+        if not report:
+            raise ValueError("Report not found")
+
+        # Check if user is a member of the report's team
+        member = TeamMember.query.filter_by(
+            user_id=current_user.id,
+            team_id=report.team_id
+        ).first()
+
+        if not member:
+            raise ValueError("You don't have access to this report")
 
         # Get report data
         report_data = ReportService.get_report_by_id(
             report_id=report_id,
             user_id=current_user.id,
-            team_id=team_id
+            team_id=report.team_id
         )
 
         # Generate PDF
