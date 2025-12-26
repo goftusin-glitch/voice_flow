@@ -91,7 +91,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
           <Snackbar
             key={toast.id}
             open={true}
-            autoHideDuration={toast.duration}
+            autoHideDuration={toast.duration ?? 4000}
             onClose={() => handleClose(toast.id)}
             anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             TransitionComponent={Slide}
