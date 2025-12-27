@@ -54,7 +54,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - VITE_API_BASE_URL=https://backend.localuae.com/api
+        - VITE_API_BASE_URL=http://72.61.244.159:5000/api
     container_name: voice_flow_frontend
     restart: always
     ports:
