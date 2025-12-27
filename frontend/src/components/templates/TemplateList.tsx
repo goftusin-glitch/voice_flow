@@ -85,7 +85,7 @@ export const TemplateList: React.FC<TemplateListProps> = ({
   return (
     <Grid container spacing={3}>
       {templates.map((template, index) => (
-        <Grid item xs={12} sm={6} lg={4} key={template.id}>
+        <Grid {...{ item: true } as any} xs={12} sm={6} lg={4} key={template.id}>
           <Grow in={true} timeout={600 + index * 100}>
             <Box>
               <TemplateCard

@@ -61,7 +61,7 @@ class ReportsService {
       const contentType = response.headers['content-type'];
       if (contentType && !contentType.includes('application/pdf')) {
         // If it's JSON, it's likely an error response
-        const text = await response.data.text();
+        const text = await (response.data as Blob).text();
         const errorData = JSON.parse(text);
         throw new Error(errorData.message || 'Failed to download PDF');
       }
@@ -77,7 +77,7 @@ class ReportsService {
       }
 
       // Create download link
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blob = new Blob([response.data as BlobPart], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
