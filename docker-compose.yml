@@ -60,7 +60,7 @@ services:
     container_name: voice_flow_frontend
     restart: always
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
     networks:
