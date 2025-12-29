@@ -11,6 +11,7 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const toast = useToast();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingInvitation, setPendingInvitation] = useState<PendingInvitation | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [checkedInvitations, setCheckedInvitations] = useState(false);
@@ -75,16 +76,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Fixed Sidebar */}
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col ml-64">
+      <div className="flex-1 flex flex-col lg:ml-64">
         {/* Fixed Navbar */}
-        <Navbar />
+        <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Scrollable Page Content */}
         <main className="flex-1 overflow-y-auto pt-20">
-          <div className="p-6">
+          <div className="p-4 lg:p-6">
             {children}
           </div>
         </main>

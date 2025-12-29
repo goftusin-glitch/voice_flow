@@ -111,7 +111,7 @@ export const Register: React.FC = () => {
       </div>
 
       {/* Right Side - Register Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-gray-50">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -119,7 +119,7 @@ export const Register: React.FC = () => {
           className="max-w-md w-full"
         >
           {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
+          <div className="lg:hidden flex items-center gap-3 mb-6 sm:mb-8 justify-center">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
               <Mic className="w-6 h-6 text-white" />
             </div>
@@ -130,10 +130,10 @@ export const Register: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="bg-white p-8 rounded-2xl shadow-lg"
+            className="bg-white p-6 sm:p-8 rounded-2xl shadow-lg"
           >
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Create your account
               </h2>
               {invitationToken && (
@@ -149,7 +149,7 @@ export const Register: React.FC = () => {
               </p>
             </div>
 
-            <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            <form className="mt-6 sm:mt-8 space-y-5 sm:space-y-6" onSubmit={handleSubmit}>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -245,7 +245,7 @@ export const Register: React.FC = () => {
             </div>
           </motion.div>
 
-          <p className="mt-8 text-center text-xs text-gray-500">
+          <p className="mt-6 sm:mt-8 text-center text-xs text-gray-500">
             By creating an account, you agree to our Terms of Service and Privacy Policy
           </p>
         </motion.div>

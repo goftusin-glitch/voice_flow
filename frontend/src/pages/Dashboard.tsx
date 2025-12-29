@@ -97,17 +97,17 @@ export const Dashboard: React.FC = () => {
 
   return (
     <Layout>
-      <div className="p-8">
+      <div className="p-4 sm:p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-2">
+        <div className="mb-6 lg:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">
             Overview of your call analysis activity
           </p>
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6 lg:mb-8">
           {metricCards.map((metric, index) => {
             const Icon = metric.icon;
             return (
@@ -131,21 +131,21 @@ export const Dashboard: React.FC = () => {
                       transition: 'box-shadow 0.3s ease-in-out',
                     }}
                   >
-                    <CardContent sx={{ p: 3 }}>
+                    <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <Box>
-                          <Typography variant="body2" color="text.secondary" gutterBottom>
+                          <Typography variant="body2" color="text.secondary" gutterBottom sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                             {metric.title}
                           </Typography>
-                          <Typography variant="h3" component="div" fontWeight="bold">
+                          <Typography variant="h3" component="div" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}>
                             {metric.value}
                           </Typography>
                         </Box>
                         <Box
-                          className={`p-3 rounded-lg ${metric.color}`}
+                          className={`p-2 sm:p-3 rounded-lg ${metric.color}`}
                           sx={{ borderRadius: 2 }}
                         >
-                          <Icon className="w-6 h-6 text-white" />
+                          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                         </Box>
                       </Box>
                     </CardContent>
@@ -164,19 +164,19 @@ export const Dashboard: React.FC = () => {
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
               borderRadius: 3,
-              mb: 4,
+              mb: { xs: 3, lg: 4 },
             }}
           >
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h4" fontWeight="bold" gutterBottom>
+            <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+              <Typography variant="h4" fontWeight="bold" gutterBottom sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                 {metrics.analysis_count > 0 ? 'Keep Going!' : 'Welcome to Voice Flow!'}
               </Typography>
-              <Typography variant="body1" sx={{ mb: 3, opacity: 0.95 }}>
+              <Typography variant="body1" sx={{ mb: 3, opacity: 0.95, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 {metrics.analysis_count > 0
                   ? `You've analyzed ${metrics.analysis_count} calls so far. Keep up the great work!`
                   : 'Get started by creating your first report template or analyzing a call.'}
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: { xs: 1.5, sm: 2 }, flexWrap: 'wrap' }}>
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -188,9 +188,10 @@ export const Dashboard: React.FC = () => {
                       bgcolor: 'white',
                       color: 'primary.main',
                       fontWeight: 600,
-                      px: 3,
-                      py: 1.5,
+                      px: { xs: 2, sm: 3 },
+                      py: { xs: 1, sm: 1.5 },
                       borderRadius: 2,
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
                       '&:hover': {
                         bgcolor: 'grey.100',
                       },
@@ -210,9 +211,10 @@ export const Dashboard: React.FC = () => {
                       bgcolor: 'rgba(255, 255, 255, 0.2)',
                       color: 'white',
                       fontWeight: 600,
-                      px: 3,
-                      py: 1.5,
+                      px: { xs: 2, sm: 3 },
+                      py: { xs: 1, sm: 1.5 },
                       borderRadius: 2,
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
                       '&:hover': {
                         bgcolor: 'rgba(255, 255, 255, 0.3)',
                       },
@@ -232,9 +234,10 @@ export const Dashboard: React.FC = () => {
                       bgcolor: 'rgba(255, 255, 255, 0.2)',
                       color: 'white',
                       fontWeight: 600,
-                      px: 3,
-                      py: 1.5,
+                      px: { xs: 2, sm: 3 },
+                      py: { xs: 1, sm: 1.5 },
                       borderRadius: 2,
+                      fontSize: { xs: '0.875rem', sm: '1rem' },
                       '&:hover': {
                         bgcolor: 'rgba(255, 255, 255, 0.3)',
                       },
@@ -251,10 +254,10 @@ export const Dashboard: React.FC = () => {
         {/* Recent Activity */}
         <Fade in={true} timeout={1000}>
           <Card elevation={2} sx={{ borderRadius: 2 }}>
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                <ActivityIcon className="w-6 h-6 text-gray-700" />
-                <Typography variant="h5" fontWeight="bold">
+            <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: { xs: 2, sm: 3 } }}>
+                <ActivityIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+                <Typography variant="h5" fontWeight="bold" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                   Recent Activity
                 </Typography>
               </Box>
@@ -298,7 +301,7 @@ export const Dashboard: React.FC = () => {
                         <Card
                           variant="outlined"
                           sx={{
-                            p: 2,
+                            p: { xs: 1.5, sm: 2 },
                             bgcolor: 'grey.50',
                             borderRadius: 2,
                             '&:hover': {
@@ -307,11 +310,11 @@ export const Dashboard: React.FC = () => {
                             transition: 'background-color 0.2s',
                           }}
                         >
-                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: { xs: 1.5, sm: 2 } }}>
                             <Box
                               sx={{
-                                width: 40,
-                                height: 40,
+                                width: { xs: 32, sm: 40 },
+                                height: { xs: 32, sm: 40 },
                                 bgcolor: 'primary.50',
                                 borderRadius: '50%',
                                 display: 'flex',
@@ -321,13 +324,13 @@ export const Dashboard: React.FC = () => {
                               }}
                             >
                               {activity.type === 'report_created' ? (
-                                <FileText className="w-5 h-5 text-blue-600" />
+                                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                               ) : (
-                                <BarChart3 className="w-5 h-5 text-blue-600" />
+                                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                               )}
                             </Box>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                              <Typography variant="body2" fontWeight={500}>
+                              <Typography variant="body2" fontWeight={500} sx={{ fontSize: { xs: '0.813rem', sm: '0.875rem' } }}>
                                 {activity.type === 'report_created' ? (
                                   <>
                                     <span style={{ color: '#2563eb' }}>{activity.user_name}</span> created
@@ -340,7 +343,7 @@ export const Dashboard: React.FC = () => {
                                   </>
                                 )}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, fontSize: { xs: '0.688rem', sm: '0.75rem' } }}>
                                 {formatDate(activity.created_at)}
                               </Typography>
                             </Box>

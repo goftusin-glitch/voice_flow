@@ -224,6 +224,61 @@ code {
   animation: spin 1s linear infinite;
 }
 
+/* Mobile-Specific Styles */
+@media (max-width: 768px) {
+  /* Improve touch targets on mobile */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better text readability on mobile */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Adjust container padding */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Smaller scrollbar on mobile */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  /* Better card spacing on mobile */
+  .card-modern {
+    @apply rounded-xl;
+  }
+
+  /* Adjust button padding on mobile */
+  .btn-modern {
+    @apply px-4 py-2.5 rounded-lg text-sm;
+  }
+
+  /* Adjust input padding on mobile */
+  .input-modern {
+    @apply px-3 py-2.5 text-base;
+  }
+}
+
+/* Tablet-Specific Adjustments */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
 /* Print Styles */
 @media print {
   .no-print {
