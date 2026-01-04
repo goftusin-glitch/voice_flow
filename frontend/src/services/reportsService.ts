@@ -7,6 +7,7 @@ import {
   ShareWhatsAppResponse,
   GeneratePDFResponse,
 } from '../types/report';
+import * as XLSX from 'xlsx';
 
 class ReportsService {
   async getReports(
@@ -105,6 +106,73 @@ class ReportsService {
       `/reports/${reportId}/share-whatsapp`
     );
     return response.data.data;
+  }
+
+  async downloadExcel(reportId: number): Promise<void> {
+    try {
+      // Fetch the full report data
+      const report = await this.getReportById(reportId);
+
+      // Create worksheet data
+      const worksheetData: any[][] = [];
+
+      // Add report header information
+      worksheetData.push(['Report Title', report.title]);
+      worksheetData.push(['Template', report.template?.name || 'N/A']);
+      worksheetData.push(['Created By', typeof report.created_by === 'string' ? report.created_by : report.created_by?.name || 'N/A']);
+      worksheetData.push(['Created At', new Date(report.created_at).toLocaleString()]);
+      worksheetData.push(['Status', report.status.charAt(0).toUpperCase() + report.status.slice(1)]);
+      worksheetData.push([]); // Empty row
+
+      // Add summary if available
+      if (report.summary) {
+        worksheetData.push(['Summary']);
+        worksheetData.push([report.summary]);
+        worksheetData.push([]); // Empty row
+      }
+
+      // Add field values section
+      worksheetData.push(['Field', 'Value']);
+      if (report.field_values && report.field_values.length > 0) {
+        report.field_values.forEach((field) => {
+          worksheetData.push([
+            field.field_label || 'N/A',
+            field.value || 'N/A'
+          ]);
+        });
+      }
+
+      worksheetData.push([]); // Empty row
+
+      // Add transcription if available
+      if (report.transcription) {
+        worksheetData.push(['Transcription']);
+        worksheetData.push([report.transcription]);
+      }
+
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+      // Set column widths
+      worksheet['!cols'] = [
+        { wch: 20 }, // Field column
+        { wch: 80 }  // Value column
+      ];
+
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
+
+      // Generate filename
+      const sanitizedTitle = report.title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30);
+      const filename = `${sanitizedTitle}_${reportId}.xlsx`;
+
+      // Download the file
+      XLSX.writeFile(workbook, filename);
+    } catch (error: any) {
+      console.error('Excel download error:', error);
+      throw error;
+    }
   }
 }
 

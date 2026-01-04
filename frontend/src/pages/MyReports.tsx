@@ -3,7 +3,7 @@ import { Layout } from '../components/common/Layout';
 import { reportsService } from '../services/reportsService';
 import { teamsService, UserTeam } from '../services/teamsService';
 import { Report } from '../types/report';
-import { Search, Eye, Download, Mail, MessageCircle, Trash2, ChevronLeft, ChevronRight, FileText, Calendar, User, Filter, Users } from 'lucide-react';
+import { Search, Eye, Download, Mail, MessageCircle, Trash2, ChevronLeft, ChevronRight, FileText, Calendar, User, Filter, Users, FileSpreadsheet } from 'lucide-react';
 import { Container, Card, CardContent, Box, Typography, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, IconButton, Chip, CircularProgress, Fade, Grow, Pagination, Button, Menu } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useToast } from '../components/common/CustomToast';
@@ -115,6 +115,16 @@ export const MyReports: React.FC = () => {
       toast.success('PDF downloaded successfully');
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to download PDF');
+    }
+  };
+
+  const handleDownloadExcel = async (reportId: number) => {
+    try {
+      toast.info('Generating Excel file...');
+      await reportsService.downloadExcel(reportId);
+      toast.success('Excel file downloaded successfully');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to download Excel file');
     }
   };
 
@@ -455,6 +465,20 @@ export const MyReports: React.FC = () => {
                             </motion.div>
                             <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                               <IconButton
+                                onClick={() => handleDownloadExcel(report.id)}
+                                sx={{
+                                  color: '#10b981',
+                                  bgcolor: '#d1fae5',
+                                  '&:hover': { bgcolor: '#a7f3d0' },
+                                }}
+                                size="medium"
+                                title="Download Excel"
+                              >
+                                <FileSpreadsheet className="w-5 h-5" />
+                              </IconButton>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                              <IconButton
                                 onClick={() => handleShareEmail(report)}
                                 sx={{
                                   color: 'purple',
@@ -462,7 +486,7 @@ export const MyReports: React.FC = () => {
                                   '&:hover': { bgcolor: '#e9d5ff' },
                                 }}
                                 size="medium"
-                                title="Share via Email"
+                                title="Share Report"
                               >
                                 <Mail className="w-5 h-5" />
                               </IconButton>
