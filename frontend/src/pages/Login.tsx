@@ -31,7 +31,7 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Voice Flow Details */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-primary-500 p-12 flex-col justify-between relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -42,8 +42,8 @@ export const Login: React.FC = () => {
         {/* Content */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-              <Mic className="w-7 h-7 text-blue-600" />
+            <div className="w-12 h-12 bg-secondary-400 rounded-xl flex items-center justify-center">
+              <Mic className="w-7 h-7 text-primary-600" />
             </div>
             <h1 className="text-3xl font-bold text-white">Voice Flow</h1>
           </div>
@@ -51,56 +51,56 @@ export const Login: React.FC = () => {
           <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
             Transform Your Call <br />Analytics Workflow
           </h2>
-          <p className="text-blue-100 text-lg mb-12">
+          <p className="text-secondary-100 text-lg mb-12">
             Automatically transcribe, analyze, and generate insights from your calls using AI-powered technology.
           </p>
 
           {/* Features */}
           <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-secondary-400 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1">AI-Powered Transcription</h3>
-                <p className="text-blue-100 text-sm">Automatically convert calls to text with high accuracy using OpenAI Whisper</p>
+                <p className="text-secondary-100 text-sm">Automatically convert calls to text with high accuracy using OpenAI Whisper</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-secondary-400 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1">Smart Analysis</h3>
-                <p className="text-blue-100 text-sm">Generate detailed reports with custom templates using GPT-4</p>
+                <p className="text-secondary-100 text-sm">Generate detailed reports with custom templates using GPT-4</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-secondary-400 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1">Team Collaboration</h3>
-                <p className="text-blue-100 text-sm">Share reports and collaborate seamlessly with your team members</p>
+                <p className="text-secondary-100 text-sm">Share reports and collaborate seamlessly with your team members</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-blue-500 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-secondary-400 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1">Custom Templates</h3>
-                <p className="text-blue-100 text-sm">Create and manage report templates tailored to your business needs</p>
+                <p className="text-secondary-100 text-sm">Create and manage report templates tailored to your business needs</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 flex items-center gap-2 text-blue-100 text-sm">
+        <div className="relative z-10 flex items-center gap-2 text-secondary-100 text-sm">
           <Shield className="w-4 h-4" />
           <span>Secure, encrypted, and compliant</span>
         </div>
@@ -116,7 +116,7 @@ export const Login: React.FC = () => {
         >
           {/* Mobile Logo */}
           <div className="lg:hidden flex items-center gap-3 mb-6 sm:mb-8 justify-center">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center">
               <Mic className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Voice Flow</h1>
@@ -134,7 +134,7 @@ export const Login: React.FC = () => {
               </h2>
               <p className="mt-2 text-sm text-gray-600">
                 Don't have an account?{' '}
-                <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link to="/register" className="font-medium text-primary-600 hover:text-primary-700">
                   Sign up for free
                 </Link>
               </p>
@@ -151,7 +151,7 @@ export const Login: React.FC = () => {
                     name="email"
                     type="email"
                     required
-                    className="appearance-none block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="appearance-none block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -166,7 +166,7 @@ export const Login: React.FC = () => {
                     name="password"
                     type="password"
                     required
-                    className="appearance-none block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="appearance-none block w-full px-4 py-3 border border-gray-300 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -178,7 +178,7 @@ export const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {loading ? 'Signing in...' : 'Sign in'}
                 </button>

@@ -63,7 +63,7 @@ export const Dashboard: React.FC = () => {
       title: 'Hours Analyzed',
       value: Number(metrics.hours_analyzed || 0).toFixed(1),
       icon: Clock,
-      color: 'bg-blue-500',
+      color: 'bg-primary-500',
     },
     {
       title: 'Total Analyses',
@@ -161,7 +161,7 @@ export const Dashboard: React.FC = () => {
           <Card
             elevation={3}
             sx={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: '#1F4F2D',
               color: 'white',
               borderRadius: 3,
               mb: { xs: 3, lg: 4 },
@@ -324,21 +324,21 @@ export const Dashboard: React.FC = () => {
                               }}
                             >
                               {activity.type === 'report_created' ? (
-                                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
                               ) : (
-                                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
                               )}
                             </Box>
                             <Box sx={{ flex: 1, minWidth: 0 }}>
                               <Typography variant="body2" fontWeight={500} sx={{ fontSize: { xs: '0.813rem', sm: '0.875rem' } }}>
                                 {activity.type === 'report_created' ? (
                                   <>
-                                    <span style={{ color: '#2563eb' }}>{activity.user_name}</span> created
+                                    <span style={{ color: '#1F4F2D' }}>{activity.user_name}</span> created
                                     report: {activity.report_title}
                                   </>
                                 ) : (
                                   <>
-                                    <span style={{ color: '#2563eb' }}>{activity.user_name}</span> created
+                                    <span style={{ color: '#1F4F2D' }}>{activity.user_name}</span> created
                                     template: {activity.template_name}
                                   </>
                                 )}

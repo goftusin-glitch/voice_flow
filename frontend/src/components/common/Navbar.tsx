@@ -36,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         <div className="flex items-center gap-2 lg:gap-4">
           {/* User Info - Hidden on small mobile */}
           <div className="hidden sm:flex items-center gap-3 px-3 lg:px-4 py-2 bg-gray-50 rounded-lg">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
               <User className="w-4 lg:w-5 h-4 lg:h-5 text-white" />
             </div>
             <div className="text-right hidden md:block">

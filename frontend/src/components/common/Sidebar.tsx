@@ -40,7 +40,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-blue-600">Voice Flow</h1>
+            <h1 className="text-2xl font-bold text-primary-600">Voice Flow</h1>
             <p className="text-xs text-gray-500 mt-1">Call Analyzer</p>
           </div>
           {/* Close button - only visible on mobile */}
@@ -65,11 +65,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 onClick={onClose}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
                   active
-                    ? 'bg-blue-50 text-blue-600 font-medium'
+                    ? 'bg-primary-50 text-primary-600 font-medium'
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
+                <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-gray-400'}`} />
                 <span>{item.label}</span>
               </Link>
             );

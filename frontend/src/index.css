@@ -64,15 +64,15 @@ code {
   }
 
   .btn-primary {
-    @apply btn-modern bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 shadow-lg hover:shadow-xl;
+    @apply btn-modern bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl;
   }
 
   .btn-secondary {
-    @apply btn-modern bg-gradient-to-r from-secondary-600 to-secondary-700 text-white hover:from-secondary-700 hover:to-secondary-800 shadow-lg hover:shadow-xl;
+    @apply btn-modern bg-secondary-400 text-primary-800 hover:bg-secondary-500 shadow-lg hover:shadow-xl;
   }
 
   .btn-success {
-    @apply btn-modern bg-gradient-to-r from-success-600 to-success-700 text-white hover:from-success-700 hover:to-success-800 shadow-lg hover:shadow-xl;
+    @apply btn-modern bg-success-600 text-white hover:bg-success-700 shadow-lg hover:shadow-xl;
   }
 
   .btn-outline {
@@ -87,36 +87,12 @@ code {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
   }
 
-  .gradient-bg {
-    @apply bg-gradient-to-br from-primary-500 via-secondary-500 to-primary-700;
+  .solid-bg {
+    @apply bg-primary-500;
   }
 
-  .gradient-text {
-    @apply bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent;
-  }
-
-  /* Animated Gradient Background */
-  .animated-gradient {
-    background: linear-gradient(
-      -45deg,
-      #0ea5e9,
-      #a855f7,
-      #0284c7,
-      #9333ea
-    );
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
-  }
-
-  /* Mesh Gradient */
-  .mesh-gradient {
-    background: radial-gradient(at 40% 20%, rgba(56, 189, 248, 0.3) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(168, 85, 247, 0.3) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(125, 211, 252, 0.2) 0px, transparent 50%),
-      radial-gradient(at 80% 50%, rgba(216, 180, 254, 0.2) 0px, transparent 50%),
-      radial-gradient(at 0% 100%, rgba(186, 230, 253, 0.2) 0px, transparent 50%),
-      radial-gradient(at 80% 100%, rgba(233, 213, 255, 0.2) 0px, transparent 50%),
-      radial-gradient(at 0% 0%, rgba(224, 242, 254, 0.1) 0px, transparent 50%);
+  .solid-bg-secondary {
+    @apply bg-secondary-400;
   }
 
   /* Floating Animation */
@@ -195,7 +171,7 @@ code {
 
 /* Selection */
 ::selection {
-  @apply bg-primary-200 text-primary-900;
+  @apply bg-secondary-300 text-primary-900;
 }
 
 /* Line Clamp Utilities */
