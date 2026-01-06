@@ -63,7 +63,7 @@ export const Dashboard: React.FC = () => {
       title: 'Hours Analyzed',
       value: Number(metrics.hours_analyzed || 0).toFixed(1),
       icon: Clock,
-      color: 'bg-primary-500',
+      color: 'bg-blue-500',
     },
     {
       title: 'Total Analyses',
@@ -161,7 +161,7 @@ export const Dashboard: React.FC = () => {
           <Card
             elevation={3}
             sx={{
-              background: '#1F4F2D',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
               borderRadius: 3,
               mb: { xs: 3, lg: 4 },
@@ -186,7 +186,7 @@ export const Dashboard: React.FC = () => {
                     href="/templates"
                     sx={{
                       bgcolor: 'white',
-                      color: 'primary.main',
+                      color: '#667eea',
                       fontWeight: 600,
                       px: { xs: 2, sm: 3 },
                       py: { xs: 1, sm: 1.5 },

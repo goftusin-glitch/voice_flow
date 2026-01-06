@@ -31,7 +31,7 @@ export const Login: React.FC = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Voice Flow Details */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary-500 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-12 flex-col justify-between relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{
@@ -42,8 +42,8 @@ export const Login: React.FC = () => {
         {/* Content */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-secondary-400 rounded-xl flex items-center justify-center">
-              <Mic className="w-7 h-7 text-primary-600" />
+            <div className="w-12 h-12 bg-white bg-opacity-20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <Mic className="w-7 h-7 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-white">Voice Flow</h1>
           </div>
@@ -51,56 +51,56 @@ export const Login: React.FC = () => {
           <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
             Transform Your Call <br />Analytics Workflow
           </h2>
-          <p className="text-secondary-100 text-lg mb-12">
+          <p className="text-blue-100 text-lg mb-12">
             Automatically transcribe, analyze, and generate insights from your calls using AI-powered technology.
           </p>
 
           {/* Features */}
           <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-secondary-400 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
                 <Zap className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1">AI-Powered Transcription</h3>
-                <p className="text-secondary-100 text-sm">Automatically convert calls to text with high accuracy using OpenAI Whisper</p>
+                <p className="text-blue-100 text-sm">Automatically convert calls to text with high accuracy using OpenAI Whisper</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-secondary-400 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1">Smart Analysis</h3>
-                <p className="text-secondary-100 text-sm">Generate detailed reports with custom templates using GPT-4</p>
+                <p className="text-blue-100 text-sm">Generate detailed reports with custom templates using GPT-4</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-secondary-400 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
                 <Users className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1">Team Collaboration</h3>
-                <p className="text-secondary-100 text-sm">Share reports and collaborate seamlessly with your team members</p>
+                <p className="text-blue-100 text-sm">Share reports and collaborate seamlessly with your team members</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-secondary-400 bg-opacity-30 rounded-lg flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-white bg-opacity-20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0">
                 <FileText className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h3 className="text-white font-semibold mb-1">Custom Templates</h3>
-                <p className="text-secondary-100 text-sm">Create and manage report templates tailored to your business needs</p>
+                <p className="text-blue-100 text-sm">Create and manage report templates tailored to your business needs</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 flex items-center gap-2 text-secondary-100 text-sm">
+        <div className="relative z-10 flex items-center gap-2 text-blue-100 text-sm">
           <Shield className="w-4 h-4" />
           <span>Secure, encrypted, and compliant</span>
         </div>

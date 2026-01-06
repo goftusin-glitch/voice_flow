@@ -143,7 +143,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
                 <ArrowLeft className="w-5 h-5" />
               </button>
             )}
-            <Mail className="w-6 h-6 text-primary-600" />
+            <Mail className="w-6 h-6 text-blue-600" />
             <h2 className="text-xl font-bold text-gray-900">{getTitle()}</h2>
           </div>
           <button
@@ -157,7 +157,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
         {/* Content */}
         <div className="px-6 py-4">
           {/* Report Info */}
-          <div className="bg-primary-50 rounded-lg p-4 mb-6">
+          <div className="bg-blue-50 rounded-lg p-4 mb-6">
             <h3 className="font-semibold text-gray-900 mb-1">{report.title}</h3>
             <p className="text-sm text-gray-600">
               Created:{' '}
@@ -178,7 +178,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => handleFormatSelect('pdf')}
-                  className="group p-6 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all"
+                  className="group p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
                 >
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors">
@@ -193,7 +193,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
 
                 <button
                   onClick={() => handleFormatSelect('excel')}
-                  className="group p-6 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all"
+                  className="group p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
                 >
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
@@ -221,7 +221,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
               <div className="grid grid-cols-2 gap-4">
                 <button
                   onClick={() => handlePlatformSelect('email')}
-                  className="group p-6 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all"
+                  className="group p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
                 >
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
@@ -236,7 +236,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
 
                 <button
                   onClick={() => handlePlatformSelect('whatsapp')}
-                  className="group p-6 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all"
+                  className="group p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all"
                 >
                   <div className="flex flex-col items-center gap-3">
                     <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
@@ -270,7 +270,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
                         value={recipient}
                         onChange={(e) => handleRecipientChange(index, e.target.value)}
                         placeholder="recipient@example.com"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       {recipients.length > 1 && (
                         <button
@@ -286,7 +286,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
                 </div>
                 <button
                   onClick={handleAddRecipient}
-                  className="mt-3 flex items-center gap-2 text-primary-600 hover:text-primary-700 text-sm font-medium"
+                  className="mt-3 flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   <Plus className="w-4 h-4" />
                   Add another recipient
@@ -303,7 +303,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Add a personal message to include in the email..."
                   rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <p className="mt-1 text-xs text-gray-500">
                   The report will be attached as a {selectedFormat.toUpperCase()} along with your message.
@@ -325,7 +325,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ report, onClose }) => {
             <button
               onClick={handleSendEmail}
               disabled={sending}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
             >
               <Mail className="w-5 h-5" />
               {sending ? 'Sending...' : 'Send Email'}
