@@ -375,6 +375,99 @@ def share_email(current_user, report_id):
         }), 500
 
 
+@reports_bp.route('/drafts', methods=['GET'])
+@token_required
+def get_drafts(current_user):
+    """Get all draft reports"""
+    try:
+        # Get query parameters
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 20, type=int)
+
+        # Get user's team
+        team_id = get_user_team_id(current_user.id)
+
+        # Get draft reports
+        result = ReportService.get_draft_reports(
+            user_id=current_user.id,
+            team_id=team_id,
+            page=page,
+            limit=limit
+        )
+
+        return jsonify({
+            'success': True,
+            'data': result
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
+    except Exception as e:
+        print(f"Error getting drafts: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to get drafts'
+        }), 500
+
+
+@reports_bp.route('/draft', methods=['POST'])
+@token_required
+def save_draft(current_user):
+    """Save analysis as draft"""
+    try:
+        data = request.get_json()
+
+        # Get required fields
+        analysis_id = data.get('analysis_id')
+        title = data.get('title')
+
+        if not analysis_id or not title:
+            return jsonify({
+                'success': False,
+                'message': 'Analysis ID and title are required'
+            }), 400
+
+        # Get user's team
+        team_id = get_user_team_id(current_user.id)
+
+        # Create draft report
+        draft = ReportService.create_draft_report(
+            analysis_id=analysis_id,
+            user_id=current_user.id,
+            team_id=team_id,
+            title=title,
+            summary=data.get('summary'),
+            field_values=data.get('field_values', [])
+        )
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'draft_id': draft.id,
+                'created_at': draft.created_at.isoformat() if draft.created_at else None
+            }
+        }), 201
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
+    except Exception as e:
+        print(f"Error saving draft: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to save draft'
+        }), 500
+
+
 @reports_bp.route('/<int:report_id>/share-whatsapp', methods=['POST'])
 @token_required
 def share_whatsapp(current_user, report_id):

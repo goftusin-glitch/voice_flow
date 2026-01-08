@@ -108,6 +108,30 @@ class ReportsService {
     return response.data.data;
   }
 
+  async getDrafts(page = 1, limit = 20): Promise<ReportsListResponse> {
+    const params = new URLSearchParams();
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+
+    const response = await apiClient.get<{ success: boolean; data: ReportsListResponse }>(
+      `/reports/drafts?${params.toString()}`
+    );
+    return response.data.data;
+  }
+
+  async saveDraft(data: {
+    analysis_id: number;
+    title: string;
+    summary?: string;
+    field_values?: Array<{ field_id: number; value: any }>;
+  }): Promise<{ draft_id: number; created_at: string }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { draft_id: number; created_at: string };
+    }>('/reports/draft', data);
+    return response.data.data;
+  }
+
   async downloadExcel(reportId: number): Promise<void> {
     try {
       // Fetch the full report data

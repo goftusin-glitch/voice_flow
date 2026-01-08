@@ -5,6 +5,8 @@ export interface DashboardMetrics {
   analysis_count: number;
   template_count: number;
   team_member_count: number;
+  drafts_count?: number;
+  reports_count?: number;
 }
 
 export interface Activity {

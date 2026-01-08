@@ -8,7 +8,8 @@ import { AnalysisResults } from '../components/analysis/AnalysisResults';
 import { Template } from '../types/template';
 import { AnalysisResult } from '../types/analysis';
 import { analysisService } from '../services/analysisService';
-import { Upload, Mic, Sparkles, Save, FileText, CheckCircle2, ArrowRight } from 'lucide-react';
+import { reportsService } from '../services/reportsService';
+import { Upload, Mic, Sparkles, Save, FileText, CheckCircle2, ArrowRight, BookmarkPlus } from 'lucide-react';
 import {
   Box,
   Stepper,
@@ -56,6 +57,7 @@ export const AnalyzeCall: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
 
   const handleTemplateSelect = (template: Template) => {
     setSelectedTemplate(template);
@@ -161,6 +163,38 @@ export const AnalyzeCall: React.FC = () => {
       toast.error(error.response?.data?.message || 'Failed to create report');
     } finally {
       setFinalizing(false);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    if (!analysisId || !reportTitle.trim()) {
+      toast.error('Please enter a report title');
+      return;
+    }
+
+    try {
+      setSavingDraft(true);
+
+      // Prepare field values
+      const fieldValues = Object.entries(editedFieldValues).map(([fieldId, value]) => ({
+        field_id: parseInt(fieldId),
+        value: value,
+      }));
+
+      // Save as draft
+      await reportsService.saveDraft({
+        analysis_id: analysisId,
+        title: reportTitle,
+        summary: analysisResult?.summary,
+        field_values: fieldValues,
+      });
+
+      toast.success('Draft saved successfully!');
+      navigate('/drafts');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to save draft');
+    } finally {
+      setSavingDraft(false);
     }
   };
 
@@ -588,10 +622,36 @@ export const AnalyzeCall: React.FC = () => {
 
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button
+                      variant="outlined"
+                      size="large"
+                      onClick={handleSaveAsDraft}
+                      disabled={!reportTitle.trim() || savingDraft || finalizing}
+                      startIcon={savingDraft ? <CircularProgress size={20} color="inherit" /> : <BookmarkPlus className="w-5 h-5" />}
+                      sx={{
+                        px: 4,
+                        py: 1.5,
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontSize: '1rem',
+                        fontWeight: 600,
+                        borderColor: 'primary.main',
+                        color: 'primary.main',
+                        '&:hover': {
+                          borderColor: 'primary.dark',
+                          bgcolor: 'primary.light',
+                        },
+                      }}
+                    >
+                      {savingDraft ? 'Saving...' : 'Save as Draft'}
+                    </Button>
+                  </motion.div>
+
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
                       variant="contained"
                       size="large"
                       onClick={handleFinalizeReport}
-                      disabled={!reportTitle.trim() || finalizing}
+                      disabled={!reportTitle.trim() || finalizing || savingDraft}
                       startIcon={finalizing ? <CircularProgress size={20} color="inherit" /> : <Save className="w-5 h-5" />}
                       sx={{
                         px: 4,

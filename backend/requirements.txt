@@ -10,7 +10,7 @@ python-dotenv==1.0.0
 gunicorn==21.2.0
 
 # OpenAI for transcription and analysis
-openai==1.6.1
+openai>=1.50.0
 
 # Audio processing
 pydub==0.25.1

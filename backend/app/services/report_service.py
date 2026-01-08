@@ -11,15 +11,19 @@ class ReportService:
     @staticmethod
     def get_reports(user_id, team_id, page=1, limit=20, search=None, status=None):
         """Get all reports for a team with pagination and filters"""
+        # Start with base query for the team
         query = Report.query.filter_by(team_id=team_id)
+
+        # Apply status filter (default to finalized if not specified)
+        if status:
+            query = query.filter_by(status=status)
+        else:
+            # Default: show only finalized reports
+            query = query.filter_by(status='finalized')
 
         # Apply search filter
         if search:
             query = query.filter(Report.title.ilike(f'%{search}%'))
-
-        # Apply status filter
-        if status:
-            query = query.filter_by(status=status)
 
         # Order by creation date descending
         query = query.order_by(Report.created_at.desc())
@@ -162,3 +166,98 @@ class ReportService:
             report_list.append(report_dict)
 
         return report_list
+
+    @staticmethod
+    def get_draft_reports(user_id, team_id, page=1, limit=20):
+        """Get all draft reports for a user"""
+        query = Report.query.filter_by(
+            team_id=team_id,
+            status='draft'
+        ).order_by(Report.created_at.desc())
+
+        # Paginate
+        total = query.count()
+        reports = query.offset((page - 1) * limit).limit(limit).all()
+
+        # Format reports with additional info
+        report_list = []
+        for report in reports:
+            template = ReportTemplate.query.get(report.template_id)
+            creator = User.query.get(report.user_id)
+
+            report_dict = report.to_dict()
+            report_dict['template_name'] = template.name if template else 'Unknown'
+            report_dict['created_by'] = f"{creator.first_name} {creator.last_name}" if creator else 'Unknown'
+
+            report_list.append(report_dict)
+
+        return {
+            'drafts': report_list,
+            'total': total,
+            'page': page,
+            'pages': (total + limit - 1) // limit
+        }
+
+    @staticmethod
+    def create_draft_report(analysis_id, user_id, team_id, title, summary=None, field_values=None):
+        """Create a draft report from analysis"""
+        # Get the analysis
+        analysis = CallAnalysis.query.get(analysis_id)
+        if not analysis:
+            raise ValueError("Analysis not found")
+
+        # Check if draft already exists for this analysis
+        existing_draft = Report.query.filter_by(
+            analysis_id=analysis_id,
+            status='draft'
+        ).first()
+
+        if existing_draft:
+            # Update existing draft
+            existing_draft.title = title
+            if summary:
+                existing_draft.summary = summary
+            existing_draft.updated_at = datetime.utcnow()
+
+            # Update field values
+            if field_values:
+                # Delete old field values
+                ReportFieldValue.query.filter_by(report_id=existing_draft.id).delete()
+
+                # Add new field values
+                for fv in field_values:
+                    report_field_value = ReportFieldValue(
+                        report_id=existing_draft.id,
+                        field_id=fv['field_id'],
+                        field_value=str(fv['value']) if fv['value'] is not None else None
+                    )
+                    db.session.add(report_field_value)
+
+            db.session.commit()
+            return existing_draft
+
+        # Create new draft report
+        report = Report(
+            analysis_id=analysis_id,
+            user_id=user_id,
+            team_id=team_id,
+            template_id=analysis.template_id,
+            title=title,
+            summary=summary,
+            status='draft'
+        )
+        db.session.add(report)
+        db.session.flush()  # Get report ID
+
+        # Add field values
+        if field_values:
+            for fv in field_values:
+                report_field_value = ReportFieldValue(
+                    report_id=report.id,
+                    field_id=fv['field_id'],
+                    field_value=str(fv['value']) if fv['value'] is not None else None
+                )
+                db.session.add(report_field_value)
+
+        db.session.commit()
+        return report

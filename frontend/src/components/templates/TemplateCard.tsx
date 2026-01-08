@@ -58,37 +58,52 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, on
               </Box>
             </Box>
 
-            {/* Action Buttons */}
-            <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <IconButton
-                  onClick={() => onEdit(template)}
-                  size="small"
-                  color="primary"
-                  title="Edit template"
-                  sx={{
-                    bgcolor: 'primary.50',
-                    '&:hover': { bgcolor: 'primary.100' },
-                  }}
-                >
-                  <Edit className="w-4 h-4" />
-                </IconButton>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <IconButton
-                  onClick={() => onDelete(template.id)}
-                  size="small"
-                  color="error"
-                  title="Delete template"
-                  sx={{
-                    bgcolor: 'error.50',
-                    '&:hover': { bgcolor: 'error.100' },
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </IconButton>
-              </motion.div>
-            </Box>
+            {/* Action Buttons - Only show if user can edit */}
+            {template.can_edit && (
+              <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <IconButton
+                    onClick={() => onEdit(template)}
+                    size="small"
+                    color="primary"
+                    title="Edit template"
+                    sx={{
+                      bgcolor: 'primary.50',
+                      '&:hover': { bgcolor: 'primary.100' },
+                    }}
+                  >
+                    <Edit className="w-4 h-4" />
+                  </IconButton>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <IconButton
+                    onClick={() => onDelete(template.id)}
+                    size="small"
+                    color="error"
+                    title="Delete template"
+                    sx={{
+                      bgcolor: 'error.50',
+                      '&:hover': { bgcolor: 'error.100' },
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </IconButton>
+                </motion.div>
+              </Box>
+            )}
+            {!template.can_edit && (
+              <Chip
+                label="View Only"
+                size="small"
+                sx={{
+                  ml: 1,
+                  bgcolor: 'grey.200',
+                  color: 'text.secondary',
+                  fontSize: '0.7rem',
+                  height: 24,
+                }}
+              />
+            )}
           </Box>
 
           {/* Description */}
@@ -150,7 +165,7 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, on
                   '&:hover': { color: 'primary.dark' },
                 }}
               >
-                View
+                {template.can_edit ? 'Edit' : 'View'}
                 <ArrowRight className="w-4 h-4" />
               </Box>
             </motion.div>

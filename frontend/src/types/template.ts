@@ -24,6 +24,8 @@ export interface Template {
   is_active: boolean;
   field_count: number;
   fields?: TemplateField[];
+  can_edit?: boolean;
+  is_owner?: boolean;
 }
 
 export interface CreateTemplateRequest {

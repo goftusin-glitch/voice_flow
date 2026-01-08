@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/common/Layout';
-import { BarChart3, FileText, Users, Clock, TrendingUp, Activity as ActivityIcon } from 'lucide-react';
+import { BarChart3, FileText, Users, Clock, TrendingUp, Activity as ActivityIcon, BookmarkCheck, CheckCircle2 } from 'lucide-react';
 import { dashboardService, DashboardMetrics, Activity } from '../services/dashboardService';
 import { Card, CardContent, Button, Box, Typography, CircularProgress, Fade, Grow } from '@mui/material';
 import { motion } from 'framer-motion';
@@ -8,11 +9,14 @@ import { useToast } from '../components/common/CustomToast';
 
 export const Dashboard: React.FC = () => {
   const toast = useToast();
+  const navigate = useNavigate();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     hours_analyzed: 0,
     analysis_count: 0,
     template_count: 0,
     team_member_count: 0,
+    drafts_count: 0,
+    reports_count: 0,
   });
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +34,8 @@ export const Dashboard: React.FC = () => {
           analysis_count: 0,
           template_count: 0,
           team_member_count: 0,
+          drafts_count: 0,
+          reports_count: 0,
         })),
         dashboardService.getRecentActivity(10).catch(() => []),
       ]);
@@ -60,28 +66,32 @@ export const Dashboard: React.FC = () => {
 
   const metricCards = [
     {
-      title: 'Hours Analyzed',
-      value: Number(metrics.hours_analyzed || 0).toFixed(1),
-      icon: Clock,
-      color: 'bg-blue-500',
+      title: 'Drafts',
+      value: String(metrics.drafts_count || 0),
+      icon: BookmarkCheck,
+      color: 'bg-yellow-500',
+      path: '/drafts',
     },
     {
-      title: 'Total Analyses',
-      value: String(metrics.analysis_count || 0),
-      icon: BarChart3,
+      title: 'Reports',
+      value: String(metrics.reports_count || 0),
+      icon: CheckCircle2,
       color: 'bg-green-500',
+      path: '/reports',
     },
     {
-      title: 'Report Templates',
+      title: 'Templates',
       value: String(metrics.template_count || 0),
       icon: FileText,
       color: 'bg-purple-500',
+      path: '/templates',
     },
     {
       title: 'Team Members',
       value: String(metrics.team_member_count || 0),
       icon: Users,
       color: 'bg-orange-500',
+      path: '/teams',
     },
   ];
 
@@ -122,9 +132,11 @@ export const Dashboard: React.FC = () => {
                 >
                   <Card
                     elevation={2}
+                    onClick={() => navigate(metric.path)}
                     sx={{
                       height: '100%',
                       borderRadius: 2,
+                      cursor: 'pointer',
                       '&:hover': {
                         boxShadow: 6,
                       },

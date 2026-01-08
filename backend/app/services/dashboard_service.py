@@ -30,11 +30,25 @@ class DashboardService:
         # Team member count
         team_member_count = TeamMember.query.filter_by(team_id=team_id).count()
 
+        # Draft reports count
+        drafts_count = Report.query.filter_by(
+            team_id=team_id,
+            status='draft'
+        ).count()
+
+        # Finalized reports count
+        reports_count = Report.query.filter_by(
+            team_id=team_id,
+            status='finalized'
+        ).count()
+
         return {
             'hours_analyzed': hours_analyzed,
             'analysis_count': analysis_count,
             'template_count': template_count,
-            'team_member_count': team_member_count
+            'team_member_count': team_member_count,
+            'drafts_count': drafts_count,
+            'reports_count': reports_count
         }
 
     @staticmethod

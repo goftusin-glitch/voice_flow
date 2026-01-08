@@ -65,6 +65,9 @@ class TemplateService:
             creator = User.query.get(template.created_by)
             if creator:
                 template_dict['created_by_name'] = f"{creator.first_name} {creator.last_name}"
+            # Add permission flag - only creator can edit/delete
+            template_dict['can_edit'] = template.created_by == user_id
+            template_dict['is_owner'] = template.created_by == user_id
             result.append(template_dict)
 
         return result
@@ -94,6 +97,10 @@ class TemplateService:
         creator = User.query.get(template.created_by)
         if creator:
             template_dict['created_by_name'] = f"{creator.first_name} {creator.last_name}"
+
+        # Add permission flag - only creator can edit/delete
+        template_dict['can_edit'] = template.created_by == user_id
+        template_dict['is_owner'] = template.created_by == user_id
 
         return template_dict
 
@@ -154,6 +161,10 @@ class TemplateService:
         if not template:
             raise ValueError("Template not found")
 
+        # Check if user is the creator (only creator can edit)
+        if template.created_by != user_id:
+            raise ValueError("Only the template creator can edit this template")
+
         # Update basic info
         if name:
             template.name = name
@@ -202,6 +213,10 @@ class TemplateService:
 
         if not template:
             raise ValueError("Template not found")
+
+        # Check if user is the creator (only creator can delete)
+        if template.created_by != user_id:
+            raise ValueError("Only the template creator can delete this template")
 
         # Soft delete
         template.is_active = False

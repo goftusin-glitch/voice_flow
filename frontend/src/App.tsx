@@ -9,6 +9,7 @@ import { Dashboard } from './pages/Dashboard';
 import { ReportTemplates } from './pages/ReportTemplates';
 import { AnalyzeCall } from './pages/AnalyzeCall';
 import { MyReports } from './pages/MyReports';
+import { Drafts } from './pages/Drafts';
 import { Teams } from './pages/Teams';
 import { Settings } from './pages/Settings';
 import { AuthCallback } from './pages/AuthCallback';
@@ -58,6 +59,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <MyReports />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Drafts Route */}
+          <Route
+            path="/drafts"
+            element={
+              <ProtectedRoute>
+                <Drafts />
               </ProtectedRoute>
             }
           />
