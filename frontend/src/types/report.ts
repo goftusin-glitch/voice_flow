@@ -39,6 +39,7 @@ export interface Report {
 
 export interface ReportsListResponse {
   reports: Report[];
+  drafts?: Report[];  // For getDrafts() endpoint
   total: number;
   page: number;
   pages: number;

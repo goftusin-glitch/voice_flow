@@ -199,7 +199,9 @@ export const Drafts: React.FC = () => {
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <User size={16} style={{ opacity: 0.6 }} />
                             <Typography variant="body2" color="text.secondary">
-                              {draft.created_by}
+                              {typeof draft.created_by === 'string'
+                                ? draft.created_by
+                                : draft.created_by?.name || 'Unknown'}
                             </Typography>
                           </Box>
 
@@ -269,14 +271,14 @@ export const Drafts: React.FC = () => {
       </Container>
 
       {/* View Modal */}
-      {selectedReport && (
+      {selectedReport && showViewModal && (
         <ReportViewModal
-          open={showViewModal}
+          report={selectedReport}
           onClose={() => {
             setShowViewModal(false);
             setSelectedReport(null);
           }}
-          report={selectedReport}
+          onUpdate={loadDrafts}
         />
       )}
     </Layout>
