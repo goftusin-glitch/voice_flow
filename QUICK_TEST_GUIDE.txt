@@ -1,0 +1,110 @@
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                        🚀 QUICK TEST GUIDE                               ║
+║                     All New Features Verification                        ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+STEP 1: Open Application
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Open your browser and navigate to:
+→ http://localhost:5173
+
+Login with your credentials
+
+
+STEP 2: Test Dashboard Cards (2 minutes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. You should see 4 colored metric cards
+2. Click each card and verify it navigates:
+   
+   [YELLOW CARD] → Drafts      → Should go to /drafts
+   [GREEN CARD]  → Reports     → Should go to /reports
+   [PURPLE CARD] → Templates   → Should go to /templates
+   [ORANGE CARD] → Team        → Should go to /teams
+
+✓ Pass if all cards are clickable and navigate correctly
+
+
+STEP 3: Test Save as Draft (5 minutes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Go to "Analyze Call" from sidebar
+2. Select a template
+3. Upload an audio file
+4. Wait for transcription and analysis
+5. Enter a report title (e.g., "Test Draft Report")
+6. Look for TWO buttons:
+   - [BUTTON 1] "Save as Draft"    (new feature!)
+   - [BUTTON 2] "Save & Finalize"
+7. Click "Save as Draft"
+8. Should show: "Draft saved successfully!"
+9. Should redirect to /drafts page
+
+✓ Pass if draft is saved and appears in Drafts page
+
+
+STEP 4: Test Drafts Page - 3 Action Buttons (5 minutes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+In the Drafts page, each draft should have 3 colored buttons:
+
+   [👁️ BLUE]   View      - Opens modal to view draft
+   [✅ GREEN]  Finalize   - Changes status to finalized (new feature!)
+   [🗑️ RED]    Delete     - Deletes the draft
+
+Test each button:
+
+A. Click VIEW (blue eye icon):
+   → Modal should open with full draft details
+   → Close modal
+
+B. Click FINALIZE (green check icon):
+   → Confirmation dialog: "Are you sure you want to finalize..."
+   → Click OK
+   → Success message: "Draft finalized successfully!"
+   → Draft disappears from Drafts page
+
+C. Go to "My Reports" page:
+   → Finalized draft should now appear here!
+
+✓ Pass if all 3 buttons work correctly
+
+
+STEP 5: Test Team Report Visibility (3 minutes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Note: You need 2 user accounts in the same team
+
+1. Login as User A
+2. Create and finalize a report
+3. Logout
+4. Login as User B (team member)
+5. Go to "My Reports"
+   → Should see User A's report!
+   → Can view, download PDF, share
+
+✓ Pass if team members can see each other's reports
+
+
+STEP 6: Test Template Permissions (3 minutes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Note: You need 2 user accounts in the same team
+
+1. Login as User A
+2. Create a new template (e.g., "Sales Template")
+3. Logout
+4. Login as User B
+5. Go to Templates page
+   → User A's template should be visible
+   → Should show "View Only" badge (new feature!)
+   → No Edit or Delete buttons visible
+   → Can still use template for analysis
+
+✓ Pass if non-creators see "View Only" badge
+
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                        ✅ TESTING COMPLETE!                              ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+If all tests pass, the features are working correctly!
+
+Report any issues found during testing.
+
