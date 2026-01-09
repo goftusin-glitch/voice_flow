@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/common/Layout';
 import { reportsService } from '../services/reportsService';
 import { Report } from '../types/report';
-import { Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight, FileText, Calendar, User } from 'lucide-react';
+import { Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight, FileText, Calendar, User, CheckCircle } from 'lucide-react';
 import { Container, Card, CardContent, Box, Typography, TextField, InputAdornment, IconButton, CircularProgress, Fade, Grow, Pagination } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useToast } from '../components/common/CustomToast';
@@ -65,6 +65,20 @@ export const Drafts: React.FC = () => {
       loadDrafts();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to delete draft');
+    }
+  };
+
+  const handleFinalize = async (draftId: number) => {
+    if (!window.confirm('Are you sure you want to finalize this draft? Once finalized, it will appear in My Reports.')) {
+      return;
+    }
+
+    try {
+      await reportsService.finalizeDraft(draftId);
+      toast.success('Draft finalized successfully! It now appears in My Reports.');
+      loadDrafts();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to finalize draft');
     }
   };
 
@@ -229,8 +243,21 @@ export const Drafts: React.FC = () => {
                             color: 'primary.main',
                             '&:hover': { bgcolor: 'primary.light', color: 'primary.contrastText' },
                           }}
+                          title="View draft"
                         >
                           <Eye size={20} />
+                        </IconButton>
+
+                        <IconButton
+                          onClick={() => handleFinalize(draft.id)}
+                          size="small"
+                          sx={{
+                            color: 'success.main',
+                            '&:hover': { bgcolor: 'success.light', color: 'success.contrastText' },
+                          }}
+                          title="Finalize draft"
+                        >
+                          <CheckCircle size={20} />
                         </IconButton>
 
                         <IconButton
@@ -240,6 +267,7 @@ export const Drafts: React.FC = () => {
                             color: 'error.main',
                             '&:hover': { bgcolor: 'error.light', color: 'error.contrastText' },
                           }}
+                          title="Delete draft"
                         >
                           <Trash2 size={20} />
                         </IconButton>

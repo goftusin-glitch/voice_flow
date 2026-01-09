@@ -134,6 +134,26 @@ class ReportService:
         return report.to_dict()
 
     @staticmethod
+    def finalize_draft(report_id, user_id, team_id):
+        """Finalize a draft report"""
+        report = Report.query.filter_by(id=report_id, team_id=team_id).first()
+
+        if not report:
+            raise ValueError("Report not found")
+
+        if report.status != 'draft':
+            raise ValueError("Only draft reports can be finalized")
+
+        # Update status to finalized
+        report.status = 'finalized'
+        report.finalized_at = datetime.utcnow()
+        report.updated_at = datetime.utcnow()
+
+        db.session.commit()
+
+        return report.to_dict()
+
+    @staticmethod
     def delete_report(report_id, user_id, team_id):
         """Delete a report"""
         report = Report.query.filter_by(id=report_id, team_id=team_id).first()

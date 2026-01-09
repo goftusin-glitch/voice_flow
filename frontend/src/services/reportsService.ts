@@ -132,6 +132,14 @@ class ReportsService {
     return response.data.data;
   }
 
+  async finalizeDraft(reportId: number): Promise<{ report_id: number; status: string; finalized_at: string }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: { report_id: number; status: string; finalized_at: string };
+    }>(`/reports/${reportId}/finalize`);
+    return response.data.data;
+  }
+
   async downloadExcel(reportId: number): Promise<void> {
     try {
       // Fetch the full report data

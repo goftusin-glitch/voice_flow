@@ -468,6 +468,45 @@ def save_draft(current_user):
         }), 500
 
 
+@reports_bp.route('/<int:report_id>/finalize', methods=['POST'])
+@token_required
+def finalize_draft(current_user, report_id):
+    """Finalize a draft report"""
+    try:
+        # Get user's team
+        team_id = get_user_team_id(current_user.id)
+
+        # Finalize the draft
+        report = ReportService.finalize_draft(
+            report_id=report_id,
+            user_id=current_user.id,
+            team_id=team_id
+        )
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'report_id': report_id,
+                'status': 'finalized',
+                'finalized_at': report.get('finalized_at')
+            }
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
+    except Exception as e:
+        print(f"Error finalizing draft: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to finalize draft'
+        }), 500
+
+
 @reports_bp.route('/<int:report_id>/share-whatsapp', methods=['POST'])
 @token_required
 def share_whatsapp(current_user, report_id):
