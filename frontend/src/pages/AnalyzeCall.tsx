@@ -4,12 +4,13 @@ import { Layout } from '../components/common/Layout';
 import { TemplateSelector } from '../components/analysis/TemplateSelector';
 import { AudioUploader } from '../components/analysis/AudioUploader';
 import { AudioRecorder } from '../components/analysis/AudioRecorder';
+import { TextInput } from '../components/analysis/TextInput';
 import { AnalysisResults } from '../components/analysis/AnalysisResults';
 import { Template } from '../types/template';
 import { AnalysisResult } from '../types/analysis';
 import { analysisService } from '../services/analysisService';
 import { reportsService } from '../services/reportsService';
-import { Upload, Mic, Sparkles, Save, FileText, CheckCircle2, ArrowRight, BookmarkPlus } from 'lucide-react';
+import { Upload, Mic, Sparkles, Save, FileText, CheckCircle2, ArrowRight, BookmarkPlus, Type } from 'lucide-react';
 import {
   Box,
   Stepper,
@@ -30,8 +31,8 @@ import {
 import { motion } from 'framer-motion';
 import { useToast } from '../components/common/CustomToast';
 
-type Step = 'select-template' | 'upload-audio' | 'analyzing' | 'results';
-type UploadMethod = 'file' | 'record';
+type Step = 'select-template' | 'select-input' | 'analyzing' | 'results';
+type InputMethod = 'file' | 'record' | 'text';
 
 export const AnalyzeCall: React.FC = () => {
   const navigate = useNavigate();
@@ -43,9 +44,10 @@ export const AnalyzeCall: React.FC = () => {
   // Template selection
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
-  // Audio upload
-  const [uploadMethod, setUploadMethod] = useState<UploadMethod>('file');
+  // Input method selection
+  const [inputMethod, setInputMethod] = useState<InputMethod>('file');
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [textInput, setTextInput] = useState<string>('');
   const [analysisId, setAnalysisId] = useState<number | null>(null);
 
   // Analysis results
@@ -63,12 +65,12 @@ export const AnalyzeCall: React.FC = () => {
     setSelectedTemplate(template);
   };
 
-  const handleContinueToUpload = () => {
+  const handleContinueToInput = () => {
     if (!selectedTemplate) {
       toast.error('Please select a template first');
       return;
     }
-    setCurrentStep('upload-audio');
+    setCurrentStep('select-input');
   };
 
   const handleFileSelect = (file: File) => {
@@ -84,21 +86,48 @@ export const AnalyzeCall: React.FC = () => {
     setAudioFile(null);
   };
 
+  const handleTextChange = (text: string) => {
+    setTextInput(text);
+  };
+
   const handleUploadAndAnalyze = async () => {
-    if (!audioFile || !selectedTemplate) {
-      toast.error('Please select an audio file and template');
+    if (!selectedTemplate) {
+      toast.error('Please select a template');
       return;
     }
 
+    // Validate input based on method
+    if (inputMethod === 'text') {
+      if (!textInput.trim() || textInput.length < 50) {
+        toast.error('Please enter at least 50 characters of text');
+        return;
+      }
+    } else {
+      // Audio methods
+      if (!audioFile) {
+        toast.error('Please select or record an audio file');
+        return;
+      }
+    }
+
     try {
-      // Step 1: Upload audio
       setUploading(true);
-      const uploadResponse = await analysisService.uploadAudio(audioFile, selectedTemplate.id);
-      const uploadedAnalysisId = uploadResponse.data.analysis_id;
+      let uploadedAnalysisId: number;
+
+      if (inputMethod === 'text') {
+        // Text input: Create text analysis directly
+        const textResponse = await analysisService.createTextAnalysis(textInput, selectedTemplate.id);
+        uploadedAnalysisId = textResponse.data.analysis_id;
+        toast.success('Text submitted successfully!');
+      } else {
+        // Audio input: Upload audio file
+        const uploadResponse = await analysisService.uploadAudio(audioFile!, selectedTemplate.id);
+        uploadedAnalysisId = uploadResponse.data.analysis_id;
+        toast.success('Audio uploaded successfully!');
+      }
+
       setAnalysisId(uploadedAnalysisId);
       setUploading(false);
-
-      toast.success('Audio uploaded successfully!');
 
       // Step 2: Analyze
       setCurrentStep('analyzing');
@@ -201,6 +230,7 @@ export const AnalyzeCall: React.FC = () => {
   const resetAnalysis = () => {
     setCurrentStep('select-template');
     setAudioFile(null);
+    setTextInput('');
     setAnalysisId(null);
     setAnalysisResult(null);
     setEditedFieldValues({});
@@ -210,14 +240,14 @@ export const AnalyzeCall: React.FC = () => {
   const getActiveStep = () => {
     switch (currentStep) {
       case 'select-template': return 0;
-      case 'upload-audio': return 1;
+      case 'select-input': return 1;
       case 'analyzing': return 2;
       case 'results': return 3;
       default: return 0;
     }
   };
 
-  const steps = ['Select Template', 'Upload Audio', 'AI Analysis', 'Review & Save'];
+  const steps = ['Select Template', 'Select Input', 'AI Analysis', 'Review & Save'];
 
   return (
     <Layout>
@@ -300,7 +330,7 @@ export const AnalyzeCall: React.FC = () => {
                   <Button
                     variant="contained"
                     size="large"
-                    onClick={handleContinueToUpload}
+                    onClick={handleContinueToInput}
                     disabled={!selectedTemplate}
                     endIcon={<ArrowRight className="w-5 h-5" />}
                     sx={{
@@ -312,7 +342,7 @@ export const AnalyzeCall: React.FC = () => {
                       fontWeight: 600,
                     }}
                   >
-                    Continue to Upload
+                    Continue
                   </Button>
                 </motion.div>
               </Box>
@@ -320,26 +350,26 @@ export const AnalyzeCall: React.FC = () => {
           </Grow>
         )}
 
-        {/* Step 2: Upload Audio */}
-        {currentStep === 'upload-audio' && (
+        {/* Step 2: Select Input */}
+        {currentStep === 'select-input' && (
           <Grow in={true} timeout={500}>
-            <Box sx={{ maxWidth: 900, mx: 'auto' }}>
-              {/* Upload Method Toggle */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3, mb: 4 }}>
+            <Box sx={{ maxWidth: 1000, mx: 'auto' }}>
+              {/* Input Method Toggle */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 3, mb: 4 }}>
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: 'spring', stiffness: 300 }}
                 >
                   <Card
-                    elevation={uploadMethod === 'file' ? 6 : 2}
-                    onClick={() => setUploadMethod('file')}
+                    elevation={inputMethod === 'file' ? 6 : 2}
+                    onClick={() => setInputMethod('file')}
                     sx={{
                       borderRadius: 3,
                       cursor: 'pointer',
-                      border: uploadMethod === 'file' ? '2px solid' : '2px solid transparent',
-                      borderColor: uploadMethod === 'file' ? 'primary.main' : 'transparent',
-                      bgcolor: uploadMethod === 'file' ? 'primary.50' : 'background.paper',
+                      border: inputMethod === 'file' ? '2px solid' : '2px solid transparent',
+                      borderColor: inputMethod === 'file' ? 'primary.main' : 'transparent',
+                      bgcolor: inputMethod === 'file' ? 'primary.50' : 'background.paper',
                       transition: 'all 0.3s ease',
                       '&:hover': {
                         transform: 'translateY(-4px)',
@@ -353,7 +383,7 @@ export const AnalyzeCall: React.FC = () => {
                           width: 64,
                           height: 64,
                           borderRadius: '50%',
-                          bgcolor: uploadMethod === 'file' ? 'primary.main' : 'grey.100',
+                          bgcolor: inputMethod === 'file' ? 'primary.main' : 'grey.100',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -361,10 +391,10 @@ export const AnalyzeCall: React.FC = () => {
                           mb: 2,
                         }}
                       >
-                        <Upload className={`w-7 h-7 ${uploadMethod === 'file' ? 'text-white' : 'text-gray-600'}`} />
+                        <Upload className={`w-7 h-7 ${inputMethod === 'file' ? 'text-white' : 'text-gray-600'}`} />
                       </Box>
                       <Typography variant="h6" fontWeight="bold" gutterBottom>
-                        Upload File
+                        Upload Audio
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Upload an audio file from your device
@@ -379,14 +409,14 @@ export const AnalyzeCall: React.FC = () => {
                   transition={{ type: 'spring', stiffness: 300 }}
                 >
                   <Card
-                    elevation={uploadMethod === 'record' ? 6 : 2}
-                    onClick={() => setUploadMethod('record')}
+                    elevation={inputMethod === 'record' ? 6 : 2}
+                    onClick={() => setInputMethod('record')}
                     sx={{
                       borderRadius: 3,
                       cursor: 'pointer',
-                      border: uploadMethod === 'record' ? '2px solid' : '2px solid transparent',
-                      borderColor: uploadMethod === 'record' ? 'primary.main' : 'transparent',
-                      bgcolor: uploadMethod === 'record' ? 'primary.50' : 'background.paper',
+                      border: inputMethod === 'record' ? '2px solid' : '2px solid transparent',
+                      borderColor: inputMethod === 'record' ? 'primary.main' : 'transparent',
+                      bgcolor: inputMethod === 'record' ? 'primary.50' : 'background.paper',
                       transition: 'all 0.3s ease',
                       '&:hover': {
                         transform: 'translateY(-4px)',
@@ -400,7 +430,7 @@ export const AnalyzeCall: React.FC = () => {
                           width: 64,
                           height: 64,
                           borderRadius: '50%',
-                          bgcolor: uploadMethod === 'record' ? 'primary.main' : 'grey.100',
+                          bgcolor: inputMethod === 'record' ? 'primary.main' : 'grey.100',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -408,33 +438,86 @@ export const AnalyzeCall: React.FC = () => {
                           mb: 2,
                         }}
                       >
-                        <Mic className={`w-7 h-7 ${uploadMethod === 'record' ? 'text-white' : 'text-gray-600'}`} />
+                        <Mic className={`w-7 h-7 ${inputMethod === 'record' ? 'text-white' : 'text-gray-600'}`} />
                       </Box>
                       <Typography variant="h6" fontWeight="bold" gutterBottom>
                         Record Audio
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Record audio directly from your microphone
+                        Record directly from your microphone
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <Card
+                    elevation={inputMethod === 'text' ? 6 : 2}
+                    onClick={() => setInputMethod('text')}
+                    sx={{
+                      borderRadius: 3,
+                      cursor: 'pointer',
+                      border: inputMethod === 'text' ? '2px solid' : '2px solid transparent',
+                      borderColor: inputMethod === 'text' ? 'primary.main' : 'transparent',
+                      bgcolor: inputMethod === 'text' ? 'primary.50' : 'background.paper',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: 4,
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                      <Box
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: '50%',
+                          bgcolor: inputMethod === 'text' ? 'primary.main' : 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mx: 'auto',
+                          mb: 2,
+                        }}
+                      >
+                        <Type className={`w-7 h-7 ${inputMethod === 'text' ? 'text-white' : 'text-gray-600'}`} />
+                      </Box>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        Enter Text
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Type or paste text directly
                       </Typography>
                     </CardContent>
                   </Card>
                 </motion.div>
               </Box>
 
-              {/* Upload/Record Interface */}
+              {/* Input Interface */}
               <Fade in={true} timeout={600}>
                 <Card elevation={3} sx={{ borderRadius: 3, mb: 3 }}>
                   <CardContent sx={{ p: 4 }}>
-                    {uploadMethod === 'file' ? (
+                    {inputMethod === 'file' ? (
                       <AudioUploader
                         onFileSelect={handleFileSelect}
                         selectedFile={audioFile}
                         onRemoveFile={handleRemoveFile}
                         disabled={uploading || analyzing}
                       />
-                    ) : (
+                    ) : inputMethod === 'record' ? (
                       <AudioRecorder
                         onRecordingComplete={handleRecordingComplete}
+                        disabled={uploading || analyzing}
+                      />
+                    ) : (
+                      <TextInput
+                        value={textInput}
+                        onTextChange={handleTextChange}
                         disabled={uploading || analyzing}
                       />
                     )}
@@ -468,7 +551,11 @@ export const AnalyzeCall: React.FC = () => {
                     variant="contained"
                     size="large"
                     onClick={handleUploadAndAnalyze}
-                    disabled={!audioFile || uploading || analyzing}
+                    disabled={
+                      uploading ||
+                      analyzing ||
+                      (inputMethod === 'text' ? textInput.length < 50 : !audioFile)
+                    }
                     startIcon={uploading ? <CircularProgress size={20} color="inherit" /> : <Sparkles className="w-5 h-5" />}
                     sx={{
                       px: 4,
@@ -483,7 +570,11 @@ export const AnalyzeCall: React.FC = () => {
                       },
                     }}
                   >
-                    {uploading ? 'Uploading...' : 'Analyze Call'}
+                    {uploading
+                      ? inputMethod === 'text'
+                        ? 'Processing...'
+                        : 'Uploading...'
+                      : 'Analyze'}
                   </Button>
                 </motion.div>
               </Box>
@@ -526,10 +617,12 @@ export const AnalyzeCall: React.FC = () => {
                 </motion.div>
 
                 <Typography variant="h4" fontWeight="bold" gutterBottom>
-                  Analyzing Your Call
+                  Analyzing Your {inputMethod === 'text' ? 'Text' : 'Call'}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                  AI is transcribing and analyzing the audio. This may take a few moments...
+                  {inputMethod === 'text'
+                    ? 'AI is analyzing your text. This may take a few moments...'
+                    : 'AI is transcribing and analyzing the audio. This may take a few moments...'}
                 </Typography>
 
                 <LinearProgress

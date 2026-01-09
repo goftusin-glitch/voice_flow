@@ -25,6 +25,18 @@ class AnalysisService {
     return response.data;
   }
 
+  async createTextAnalysis(text: string, templateId: number): Promise<{ success: boolean; data: { analysis_id: number; input_type: string } }> {
+    const response = await apiClient.post<{ success: boolean; data: { analysis_id: number; input_type: string } }>(
+      '/analysis/create-text',
+      {
+        text,
+        template_id: templateId,
+      }
+    );
+
+    return response.data;
+  }
+
   async analyzeCall(analysisId: number): Promise<AnalyzeResponse> {
     const response = await apiClient.post<AnalyzeResponse>('/analysis/analyze', {
       analysis_id: analysisId,
