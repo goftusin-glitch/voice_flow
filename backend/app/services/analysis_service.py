@@ -163,6 +163,35 @@ Be accurate and concise in your analysis."""
         return report
 
     @staticmethod
+    def create_text_analysis(text: str, template_id: int, user_id: int, team_id: int) -> CallAnalysis:
+        """
+        Create an analysis from direct text input (skip transcription)
+
+        Args:
+            text: Direct text input from user
+            template_id: Template to use for analysis
+            user_id: User creating the analysis
+            team_id: Team ID
+
+        Returns:
+            CallAnalysis: Created analysis object
+        """
+        # Create analysis record with text input
+        analysis = CallAnalysis(
+            user_id=user_id,
+            team_id=team_id,
+            template_id=template_id,
+            input_type='text',
+            input_text=text,
+            transcription=text  # Use text as transcription for analysis
+        )
+
+        db.session.add(analysis)
+        db.session.commit()
+
+        return analysis
+
+    @staticmethod
     def generate_summary(transcription: str, max_length: int = 200) -> str:
         """
         Generate a brief summary of the transcription

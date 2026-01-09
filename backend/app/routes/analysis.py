@@ -96,10 +96,75 @@ def upload_audio(current_user):
         }), 500
 
 
+@analysis_bp.route('/create-text', methods=['POST'])
+@token_required
+def create_text_analysis(current_user):
+    """Create analysis from direct text input"""
+    try:
+        data = request.get_json()
+
+        # Get required fields
+        text = data.get('text')
+        template_id = data.get('template_id')
+
+        if not text or not template_id:
+            return jsonify({
+                'success': False,
+                'message': 'Text and template_id are required'
+            }), 400
+
+        if not text.strip():
+            return jsonify({
+                'success': False,
+                'message': 'Text cannot be empty'
+            }), 400
+
+        # Validate template exists
+        template = ReportTemplate.query.get(template_id)
+        if not template:
+            return jsonify({
+                'success': False,
+                'message': 'Template not found'
+            }), 404
+
+        # Get user's team
+        team = TemplateService.get_or_create_team(current_user.id)
+
+        # Create text analysis
+        analysis = AnalysisService.create_text_analysis(
+            text=text,
+            template_id=template_id,
+            user_id=current_user.id,
+            team_id=team.id
+        )
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'analysis_id': analysis.id,
+                'input_type': 'text'
+            }
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
+    except Exception as e:
+        print(f"Text analysis creation error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Failed to create text analysis: {str(e)}'
+        }), 500
+
+
 @analysis_bp.route('/analyze', methods=['POST'])
 @token_required
 def analyze_call(current_user):
-    """Transcribe and analyze uploaded audio"""
+    """Transcribe and analyze uploaded audio or text input"""
     try:
         data = request.get_json()
 
@@ -134,15 +199,23 @@ def analyze_call(current_user):
                 'message': 'Template not found'
             }), 404
 
-        # Get absolute file path
-        absolute_path = AudioService.get_absolute_path(analysis.audio_file_path)
+        # Handle different input types
+        if analysis.input_type == 'text':
+            # Text input: already has transcription
+            transcription = analysis.transcription
+        elif analysis.input_type == 'audio':
+            # Audio input: need to transcribe
+            absolute_path = AudioService.get_absolute_path(analysis.audio_file_path)
+            transcription = TranscriptionService.transcribe_audio(absolute_path)
 
-        # Transcribe audio
-        transcription = TranscriptionService.transcribe_audio(absolute_path)
-
-        # Save transcription
-        analysis.transcription = transcription
-        db.session.commit()
+            # Save transcription
+            analysis.transcription = transcription
+            db.session.commit()
+        else:
+            return jsonify({
+                'success': False,
+                'message': f'Unsupported input type: {analysis.input_type}'
+            }), 400
 
         # Analyze transcription with GPT-4
         analysis_result = AnalysisService.analyze_transcription(transcription, template)

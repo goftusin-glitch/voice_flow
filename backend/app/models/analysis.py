@@ -9,8 +9,14 @@ class CallAnalysis(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False, index=True)
     template_id = db.Column(db.Integer, db.ForeignKey('report_templates.id'), nullable=False, index=True)
+
+    # Input type and sources
+    input_type = db.Column(db.Enum('audio', 'text', 'image', name='input_type_enum'), default='audio', nullable=False)
     audio_file_path = db.Column(db.String(500))
     audio_duration = db.Column(db.Integer)  # Duration in seconds
+    input_text = db.Column(db.Text)  # For direct text input
+    image_file_path = db.Column(db.String(500))  # For image input
+
     transcription = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
@@ -41,10 +47,13 @@ class CallAnalysis(db.Model):
             'user_id': self.user_id,
             'team_id': self.team_id,
             'template_id': self.template_id,
+            'input_type': self.input_type,
             'audio_file_path': self.audio_file_path,
             'audio_duration': self.audio_duration,
             'audio_duration_formatted': self.get_audio_duration_formatted(),
             'audio_duration_hours': self.get_audio_duration_in_hours(),
+            'input_text': self.input_text if self.input_type == 'text' else None,
+            'image_file_path': self.image_file_path if self.input_type == 'image' else None,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
