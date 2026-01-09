@@ -7,6 +7,8 @@ import { Container, Card, CardContent, Box, Typography, TextField, InputAdornmen
 import { motion } from 'framer-motion';
 import { useToast } from '../components/common/CustomToast';
 import { ReportViewModal } from '../components/reports/ReportViewModal';
+import { ConfirmDialog } from '../components/common/ConfirmDialog';
+import { DraftEditModal } from '../components/drafts/DraftEditModal';
 import { useNavigate } from 'react-router-dom';
 
 export const Drafts: React.FC = () => {
@@ -20,6 +22,11 @@ export const Drafts: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showFinalizeDialog, setShowFinalizeDialog] = useState(false);
+  const [draftToDelete, setDraftToDelete] = useState<number | null>(null);
+  const [draftToFinalize, setDraftToFinalize] = useState<number | null>(null);
 
   useEffect(() => {
     loadDrafts();
@@ -54,28 +61,48 @@ export const Drafts: React.FC = () => {
     }
   };
 
-  const handleDelete = async (draftId: number) => {
-    if (!window.confirm('Are you sure you want to delete this draft?')) {
-      return;
+  const handleEdit = async (draft: Report) => {
+    try {
+      const fullReport = await reportsService.getReportById(draft.id);
+      setSelectedReport(fullReport);
+      setShowEditModal(true);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to load draft');
     }
+  };
+
+  const handleDeleteClick = (draftId: number) => {
+    setDraftToDelete(draftId);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!draftToDelete) return;
 
     try {
-      await reportsService.deleteReport(draftId);
+      await reportsService.deleteReport(draftToDelete);
       toast.success('Draft deleted successfully');
+      setShowDeleteDialog(false);
+      setDraftToDelete(null);
       loadDrafts();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to delete draft');
     }
   };
 
-  const handleFinalize = async (draftId: number) => {
-    if (!window.confirm('Are you sure you want to finalize this draft? Once finalized, it will appear in My Reports.')) {
-      return;
-    }
+  const handleFinalizeClick = (draftId: number) => {
+    setDraftToFinalize(draftId);
+    setShowFinalizeDialog(true);
+  };
+
+  const handleFinalizeConfirm = async () => {
+    if (!draftToFinalize) return;
 
     try {
-      await reportsService.finalizeDraft(draftId);
+      await reportsService.finalizeDraft(draftToFinalize);
       toast.success('Draft finalized successfully! It now appears in My Reports.');
+      setShowFinalizeDialog(false);
+      setDraftToFinalize(null);
       loadDrafts();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to finalize draft');
@@ -249,7 +276,19 @@ export const Drafts: React.FC = () => {
                         </IconButton>
 
                         <IconButton
-                          onClick={() => handleFinalize(draft.id)}
+                          onClick={() => handleEdit(draft)}
+                          size="small"
+                          sx={{
+                            color: 'info.main',
+                            '&:hover': { bgcolor: 'info.light', color: 'info.contrastText' },
+                          }}
+                          title="Edit draft"
+                        >
+                          <Edit size={20} />
+                        </IconButton>
+
+                        <IconButton
+                          onClick={() => handleFinalizeClick(draft.id)}
                           size="small"
                           sx={{
                             color: 'success.main',
@@ -261,7 +300,7 @@ export const Drafts: React.FC = () => {
                         </IconButton>
 
                         <IconButton
-                          onClick={() => handleDelete(draft.id)}
+                          onClick={() => handleDeleteClick(draft.id)}
                           size="small"
                           sx={{
                             color: 'error.main',
@@ -309,6 +348,50 @@ export const Drafts: React.FC = () => {
           onUpdate={loadDrafts}
         />
       )}
+
+      {/* Edit Modal */}
+      {selectedReport && showEditModal && (
+        <DraftEditModal
+          open={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setSelectedReport(null);
+          }}
+          draft={selectedReport}
+          onUpdate={loadDrafts}
+          onFinalize={loadDrafts}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={showDeleteDialog}
+        onClose={() => {
+          setShowDeleteDialog(false);
+          setDraftToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Draft"
+        message="Are you sure you want to delete this draft? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      {/* Finalize Confirmation Dialog */}
+      <ConfirmDialog
+        open={showFinalizeDialog}
+        onClose={() => {
+          setShowFinalizeDialog(false);
+          setDraftToFinalize(null);
+        }}
+        onConfirm={handleFinalizeConfirm}
+        title="Finalize Draft"
+        message="Are you sure you want to finalize this draft? Once finalized, it will appear in My Reports and can no longer be edited as a draft."
+        confirmText="Finalize"
+        cancelText="Cancel"
+        type="success"
+      />
     </Layout>
   );
 };
