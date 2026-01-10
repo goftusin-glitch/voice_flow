@@ -5,12 +5,13 @@ import { TemplateSelector } from '../components/analysis/TemplateSelector';
 import { AudioUploader } from '../components/analysis/AudioUploader';
 import { AudioRecorder } from '../components/analysis/AudioRecorder';
 import { TextInput } from '../components/analysis/TextInput';
+import { ImageUploader } from '../components/analysis/ImageUploader';
 import { AnalysisResults } from '../components/analysis/AnalysisResults';
 import { Template } from '../types/template';
 import { AnalysisResult } from '../types/analysis';
 import { analysisService } from '../services/analysisService';
 import { reportsService } from '../services/reportsService';
-import { Upload, Mic, Sparkles, Save, FileText, CheckCircle2, ArrowRight, BookmarkPlus, Type } from 'lucide-react';
+import { Upload, Mic, Sparkles, Save, FileText, CheckCircle2, ArrowRight, BookmarkPlus, Type, Image as ImageIcon } from 'lucide-react';
 import {
   Box,
   Stepper,
@@ -32,7 +33,7 @@ import { motion } from 'framer-motion';
 import { useToast } from '../components/common/CustomToast';
 
 type Step = 'select-template' | 'select-input' | 'analyzing' | 'results';
-type InputMethod = 'file' | 'record' | 'text';
+type InputMethod = 'file' | 'record' | 'text' | 'image';
 
 export const AnalyzeCall: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +49,7 @@ export const AnalyzeCall: React.FC = () => {
   const [inputMethod, setInputMethod] = useState<InputMethod>('file');
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [textInput, setTextInput] = useState<string>('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [analysisId, setAnalysisId] = useState<number | null>(null);
 
   // Analysis results
@@ -90,6 +92,14 @@ export const AnalyzeCall: React.FC = () => {
     setTextInput(text);
   };
 
+  const handleImageSelect = (file: File) => {
+    setImageFile(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+  };
+
   const handleUploadAndAnalyze = async () => {
     if (!selectedTemplate) {
       toast.error('Please select a template');
@@ -100,6 +110,11 @@ export const AnalyzeCall: React.FC = () => {
     if (inputMethod === 'text') {
       if (!textInput.trim() || textInput.length < 50) {
         toast.error('Please enter at least 50 characters of text');
+        return;
+      }
+    } else if (inputMethod === 'image') {
+      if (!imageFile) {
+        toast.error('Please select an image file');
         return;
       }
     } else {
@@ -119,6 +134,11 @@ export const AnalyzeCall: React.FC = () => {
         const textResponse = await analysisService.createTextAnalysis(textInput, selectedTemplate.id);
         uploadedAnalysisId = textResponse.data.analysis_id;
         toast.success('Text submitted successfully!');
+      } else if (inputMethod === 'image') {
+        // Image input: Upload image file
+        const imageResponse = await analysisService.uploadImage(imageFile!, selectedTemplate.id);
+        uploadedAnalysisId = imageResponse.data.analysis_id;
+        toast.success('Image uploaded successfully!');
       } else {
         // Audio input: Upload audio file
         const uploadResponse = await analysisService.uploadAudio(audioFile!, selectedTemplate.id);
@@ -231,6 +251,7 @@ export const AnalyzeCall: React.FC = () => {
     setCurrentStep('select-template');
     setAudioFile(null);
     setTextInput('');
+    setImageFile(null);
     setAnalysisId(null);
     setAnalysisResult(null);
     setEditedFieldValues({});
@@ -353,9 +374,9 @@ export const AnalyzeCall: React.FC = () => {
         {/* Step 2: Select Input */}
         {currentStep === 'select-input' && (
           <Grow in={true} timeout={500}>
-            <Box sx={{ maxWidth: 1000, mx: 'auto' }}>
+            <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
               {/* Input Method Toggle */}
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 3, mb: 4 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 3, mb: 4 }}>
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -496,6 +517,53 @@ export const AnalyzeCall: React.FC = () => {
                     </CardContent>
                   </Card>
                 </motion.div>
+
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <Card
+                    elevation={inputMethod === 'image' ? 6 : 2}
+                    onClick={() => setInputMethod('image')}
+                    sx={{
+                      borderRadius: 3,
+                      cursor: 'pointer',
+                      border: inputMethod === 'image' ? '2px solid' : '2px solid transparent',
+                      borderColor: inputMethod === 'image' ? 'primary.main' : 'transparent',
+                      bgcolor: inputMethod === 'image' ? 'primary.50' : 'background.paper',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: 4,
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ p: 3, textAlign: 'center' }}>
+                      <Box
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: '50%',
+                          bgcolor: inputMethod === 'image' ? 'primary.main' : 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mx: 'auto',
+                          mb: 2,
+                        }}
+                      >
+                        <ImageIcon className={`w-7 h-7 ${inputMethod === 'image' ? 'text-white' : 'text-gray-600'}`} />
+                      </Box>
+                      <Typography variant="h6" fontWeight="bold" gutterBottom>
+                        Upload Image
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Upload screenshots or documents
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </motion.div>
               </Box>
 
               {/* Input Interface */}
@@ -514,10 +582,17 @@ export const AnalyzeCall: React.FC = () => {
                         onRecordingComplete={handleRecordingComplete}
                         disabled={uploading || analyzing}
                       />
-                    ) : (
+                    ) : inputMethod === 'text' ? (
                       <TextInput
                         value={textInput}
                         onTextChange={handleTextChange}
+                        disabled={uploading || analyzing}
+                      />
+                    ) : (
+                      <ImageUploader
+                        onFileSelect={handleImageSelect}
+                        selectedFile={imageFile}
+                        onRemoveFile={handleRemoveImage}
                         disabled={uploading || analyzing}
                       />
                     )}
@@ -554,7 +629,11 @@ export const AnalyzeCall: React.FC = () => {
                     disabled={
                       uploading ||
                       analyzing ||
-                      (inputMethod === 'text' ? textInput.length < 50 : !audioFile)
+                      (inputMethod === 'text'
+                        ? textInput.length < 50
+                        : inputMethod === 'image'
+                        ? !imageFile
+                        : !audioFile)
                     }
                     startIcon={uploading ? <CircularProgress size={20} color="inherit" /> : <Sparkles className="w-5 h-5" />}
                     sx={{
@@ -573,6 +652,8 @@ export const AnalyzeCall: React.FC = () => {
                     {uploading
                       ? inputMethod === 'text'
                         ? 'Processing...'
+                        : inputMethod === 'image'
+                        ? 'Uploading...'
                         : 'Uploading...'
                       : 'Analyze'}
                   </Button>
@@ -617,11 +698,13 @@ export const AnalyzeCall: React.FC = () => {
                 </motion.div>
 
                 <Typography variant="h4" fontWeight="bold" gutterBottom>
-                  Analyzing Your {inputMethod === 'text' ? 'Text' : 'Call'}
+                  Analyzing Your {inputMethod === 'text' ? 'Text' : inputMethod === 'image' ? 'Image' : 'Call'}
                 </Typography>
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
                   {inputMethod === 'text'
                     ? 'AI is analyzing your text. This may take a few moments...'
+                    : inputMethod === 'image'
+                    ? 'AI is extracting data from your image and analyzing it. This may take a few moments...'
                     : 'AI is transcribing and analyzing the audio. This may take a few moments...'}
                 </Typography>
 

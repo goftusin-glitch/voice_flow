@@ -37,6 +37,24 @@ class AnalysisService {
     return response.data;
   }
 
+  async uploadImage(imageFile: File, templateId: number): Promise<{ success: boolean; data: { analysis_id: number; image_path: string; input_type: string } }> {
+    const formData = new FormData();
+    formData.append('image_file', imageFile);
+    formData.append('template_id', templateId.toString());
+
+    const response = await apiClient.post<{ success: boolean; data: { analysis_id: number; image_path: string; input_type: string } }>(
+      '/analysis/upload-image',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    return response.data;
+  }
+
   async analyzeCall(analysisId: number): Promise<AnalyzeResponse> {
     const response = await apiClient.post<AnalyzeResponse>('/analysis/analyze', {
       analysis_id: analysisId,

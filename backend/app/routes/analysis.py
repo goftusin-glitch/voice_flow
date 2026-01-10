@@ -161,10 +161,123 @@ def create_text_analysis(current_user):
         }), 500
 
 
+@analysis_bp.route('/upload-image', methods=['POST'])
+@token_required
+def upload_image(current_user):
+    """Upload image file for analysis"""
+    try:
+        # Check if file is present
+        if 'image_file' not in request.files:
+            return jsonify({
+                'success': False,
+                'message': 'No image file provided'
+            }), 400
+
+        file = request.files['image_file']
+
+        if file.filename == '':
+            return jsonify({
+                'success': False,
+                'message': 'No file selected'
+            }), 400
+
+        # Get template_id from form data
+        template_id = request.form.get('template_id')
+        if not template_id:
+            return jsonify({
+                'success': False,
+                'message': 'Template ID is required'
+            }), 400
+
+        # Validate template exists
+        template = ReportTemplate.query.get(template_id)
+        if not template:
+            return jsonify({
+                'success': False,
+                'message': 'Template not found'
+            }), 404
+
+        # Validate file type
+        allowed_extensions = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'}
+        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+        if file_ext not in allowed_extensions:
+            return jsonify({
+                'success': False,
+                'message': f'Invalid file type. Allowed: {", ".join(allowed_extensions)}'
+            }), 400
+
+        # Validate file size (max 10MB for images)
+        max_size = 10 * 1024 * 1024  # 10MB
+        file.seek(0, 2)  # Seek to end
+        file_size = file.tell()
+        file.seek(0)  # Reset to beginning
+        if file_size > max_size:
+            return jsonify({
+                'success': False,
+                'message': 'Image file size exceeds 10MB limit'
+            }), 400
+
+        # Save image file
+        import os
+        from werkzeug.utils import secure_filename
+        from flask import current_app
+
+        # Create images upload directory
+        images_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'images', f'user_{current_user.id}')
+        os.makedirs(images_dir, exist_ok=True)
+
+        # Generate unique filename
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = secure_filename(file.filename)
+        unique_filename = f"{timestamp}_{filename}"
+        file_path = os.path.join(images_dir, unique_filename)
+
+        # Save file
+        file.save(file_path)
+
+        # Get relative path for database
+        relative_path = os.path.join('images', f'user_{current_user.id}', unique_filename)
+
+        # Get user's team
+        team = TemplateService.get_or_create_team(current_user.id)
+
+        # Create image analysis record
+        analysis = AnalysisService.create_image_analysis(
+            image_path=relative_path,
+            template_id=template_id,
+            user_id=current_user.id,
+            team_id=team.id
+        )
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'analysis_id': analysis.id,
+                'image_path': relative_path,
+                'input_type': 'image'
+            }
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
+    except Exception as e:
+        print(f"Image upload error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Failed to upload image file: {str(e)}'
+        }), 500
+
+
 @analysis_bp.route('/analyze', methods=['POST'])
 @token_required
 def analyze_call(current_user):
-    """Transcribe and analyze uploaded audio or text input"""
+    """Transcribe and analyze uploaded audio, text, or image input"""
     try:
         data = request.get_json()
 
@@ -209,6 +322,14 @@ def analyze_call(current_user):
             transcription = TranscriptionService.transcribe_audio(absolute_path)
 
             # Save transcription
+            analysis.transcription = transcription
+            db.session.commit()
+        elif analysis.input_type == 'image':
+            # Image input: extract text using GPT-4 Vision
+            absolute_path = AudioService.get_absolute_path(analysis.image_file_path)
+            transcription = AnalysisService.extract_text_from_image(absolute_path, template)
+
+            # Save extracted text as transcription
             analysis.transcription = transcription
             db.session.commit()
         else:
