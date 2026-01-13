@@ -50,24 +50,40 @@ class AuthService:
         db.session.add(user)
         db.session.flush()  # Flush to get user.id
 
-        # Always create a default team for the user
-        team = Team(
-            name=f"{first_name}'s Team",
-            owner_id=user.id
-        )
-        db.session.add(team)
-        db.session.flush()
+        # If invitation token provided, accept invitation and join the team
+        if invitation_token:
+            # Accept the invitation and add user to the invited team
+            invitation.status = 'accepted'
 
-        # Add user as team member
-        team_member = TeamMember(
-            team_id=team.id,
-            user_id=user.id,
-            role='owner'
-        )
-        db.session.add(team_member)
-        db.session.commit()
+            # Add user to the invited team
+            team_member = TeamMember(
+                team_id=invitation.team_id,
+                user_id=user.id,
+                role='member'
+            )
+            db.session.add(team_member)
+            db.session.commit()
 
-        print(f"User {user.id} created with own team. Invitation will be accepted manually after login.")
+            print(f"User {user.id} registered and joined team {invitation.team_id} via invitation")
+        else:
+            # Create a default team for the user (only if no invitation)
+            team = Team(
+                name=f"{first_name}'s Team",
+                owner_id=user.id
+            )
+            db.session.add(team)
+            db.session.flush()
+
+            # Add user as team member with owner role
+            team_member = TeamMember(
+                team_id=team.id,
+                user_id=user.id,
+                role='owner'
+            )
+            db.session.add(team_member)
+            db.session.commit()
+
+            print(f"User {user.id} created with own team {team.id}")
 
         # Generate tokens
         access_token = AuthService.generate_access_token(user.id)
