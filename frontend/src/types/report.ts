@@ -5,6 +5,12 @@ export interface ReportFieldValue {
   value: string | number;
 }
 
+export interface CustomField {
+  id?: number;
+  custom_field_name: string;
+  value: string | number;
+}
+
 export interface ReportTemplate {
   id: number;
   name: string;
@@ -33,6 +39,7 @@ export interface Report {
   created_by?: string | ReportCreator;
   template?: ReportTemplate;
   field_values?: ReportFieldValue[];
+  custom_fields?: CustomField[];
   transcription?: string;
   audio_duration?: number;
 }
@@ -49,6 +56,10 @@ export interface UpdateReportRequest {
   title?: string;
   field_values?: Array<{
     field_id: number;
+    value: string | number;
+  }>;
+  custom_fields?: Array<{
+    custom_field_name: string;
     value: string | number;
   }>;
 }

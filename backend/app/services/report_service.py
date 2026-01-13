@@ -64,17 +64,27 @@ class ReportService:
         template = ReportTemplate.query.get(report.template_id)
         creator = User.query.get(report.user_id)
 
-        # Get field values with field details
+        # Get field values with field details (including custom fields)
         field_values = []
+        custom_fields = []
         for fv in report.field_values:
-            field = TemplateField.query.get(fv.field_id)
-            if field:
-                field_values.append({
-                    'field_id': fv.field_id,
-                    'field_label': field.field_label,
-                    'field_type': field.field_type,
+            if fv.is_custom_field():
+                # This is a custom field (not from template)
+                custom_fields.append({
+                    'id': fv.id,
+                    'custom_field_name': fv.custom_field_name,
                     'value': fv.field_value
                 })
+            else:
+                # This is a template field
+                field = TemplateField.query.get(fv.field_id)
+                if field:
+                    field_values.append({
+                        'field_id': fv.field_id,
+                        'field_label': field.field_label,
+                        'field_type': field.field_type,
+                        'value': fv.field_value
+                    })
 
         # Build response
         report_dict = report.to_dict()
@@ -84,6 +94,7 @@ class ReportService:
             'description': template.description
         } if template else None
         report_dict['field_values'] = field_values
+        report_dict['custom_fields'] = custom_fields
         report_dict['transcription'] = analysis.transcription if analysis else ''
         report_dict['audio_duration'] = analysis.audio_duration if analysis else 0
         report_dict['created_by'] = {
@@ -95,8 +106,8 @@ class ReportService:
         return report_dict
 
     @staticmethod
-    def update_report(report_id, user_id, team_id, title=None, field_values=None):
-        """Update a report"""
+    def update_report(report_id, user_id, team_id, title=None, field_values=None, custom_fields=None):
+        """Update a report (including custom fields)"""
         report = Report.query.filter_by(id=report_id, team_id=team_id).first()
 
         if not report:
@@ -106,7 +117,7 @@ class ReportService:
         if title:
             report.title = title
 
-        # Update field values if provided
+        # Update template field values if provided
         if field_values:
             for fv_data in field_values:
                 field_id = fv_data.get('field_id')
@@ -127,6 +138,28 @@ class ReportService:
                         field_value=value
                     )
                     db.session.add(field_value)
+
+        # Handle custom fields if provided
+        if custom_fields is not None:
+            # First, remove all existing custom fields for this report
+            ReportFieldValue.query.filter_by(
+                report_id=report.id,
+                field_id=None
+            ).delete()
+
+            # Add new custom fields
+            for cf_data in custom_fields:
+                custom_field_name = cf_data.get('custom_field_name')
+                value = cf_data.get('value')
+
+                if custom_field_name:  # Only add if name is provided
+                    custom_field_value = ReportFieldValue(
+                        report_id=report.id,
+                        field_id=None,
+                        custom_field_name=custom_field_name,
+                        field_value=value
+                    )
+                    db.session.add(custom_field_value)
 
         report.updated_at = datetime.utcnow()
         db.session.commit()
@@ -219,7 +252,7 @@ class ReportService:
         }
 
     @staticmethod
-    def create_draft_report(analysis_id, user_id, team_id, title, summary=None, field_values=None):
+    def create_draft_report(analysis_id, user_id, team_id, title, summary=None, field_values=None, custom_fields=None):
         """Create a draft report from analysis"""
         # Get the analysis
         analysis = CallAnalysis.query.get(analysis_id)
@@ -239,12 +272,11 @@ class ReportService:
                 existing_draft.summary = summary
             existing_draft.updated_at = datetime.utcnow()
 
-            # Update field values
-            if field_values:
-                # Delete old field values
-                ReportFieldValue.query.filter_by(report_id=existing_draft.id).delete()
+            # Delete all existing field values (both template and custom)
+            ReportFieldValue.query.filter_by(report_id=existing_draft.id).delete()
 
-                # Add new field values
+            # Add template field values
+            if field_values:
                 for fv in field_values:
                     report_field_value = ReportFieldValue(
                         report_id=existing_draft.id,
@@ -252,6 +284,21 @@ class ReportService:
                         field_value=str(fv['value']) if fv['value'] is not None else None
                     )
                     db.session.add(report_field_value)
+
+            # Add custom fields
+            if custom_fields:
+                for cf in custom_fields:
+                    custom_field_name = cf.get('custom_field_name')
+                    value = cf.get('value')
+
+                    if custom_field_name:  # Only add if name is provided
+                        custom_field_value = ReportFieldValue(
+                            report_id=existing_draft.id,
+                            field_id=None,
+                            custom_field_name=custom_field_name,
+                            field_value=str(value) if value is not None else None
+                        )
+                        db.session.add(custom_field_value)
 
             db.session.commit()
             return existing_draft
@@ -269,7 +316,7 @@ class ReportService:
         db.session.add(report)
         db.session.flush()  # Get report ID
 
-        # Add field values
+        # Add template field values
         if field_values:
             for fv in field_values:
                 report_field_value = ReportFieldValue(
@@ -278,6 +325,21 @@ class ReportService:
                     field_value=str(fv['value']) if fv['value'] is not None else None
                 )
                 db.session.add(report_field_value)
+
+        # Add custom fields
+        if custom_fields:
+            for cf in custom_fields:
+                custom_field_name = cf.get('custom_field_name')
+                value = cf.get('value')
+
+                if custom_field_name:  # Only add if name is provided
+                    custom_field_value = ReportFieldValue(
+                        report_id=report.id,
+                        field_id=None,
+                        custom_field_name=custom_field_name,
+                        field_value=str(value) if value is not None else None
+                    )
+                    db.session.add(custom_field_value)
 
         db.session.commit()
         return report

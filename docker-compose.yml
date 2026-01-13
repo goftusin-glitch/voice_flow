@@ -32,7 +32,7 @@ services:
     environment:
       - FLASK_ENV=production
       - DATABASE_URL=mysql+pymysql://voiceflow:${MYSQL_PASSWORD:-change_this_password}@mysql:3306/voice_flow
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-change_this_password}
+      - MYSQL_PASSWORD=VoiceFlow_Prod_User_2024_SecurePass!
     env_file:
       - ./backend/.env.production
     volumes:

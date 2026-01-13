@@ -217,6 +217,23 @@ export const ReportViewModal: React.FC<ReportViewModalProps> = ({
             </div>
           )}
 
+          {/* Custom Fields */}
+          {report.custom_fields && report.custom_fields.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Custom Fields</h3>
+              <div className="space-y-4">
+                {report.custom_fields.map((cf, index) => (
+                  <div key={index} className="border-b border-gray-200 pb-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {cf.custom_field_name}
+                    </label>
+                    <p className="text-gray-900">{cf.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Transcription */}
           {report.transcription && (
             <div className="mb-6">

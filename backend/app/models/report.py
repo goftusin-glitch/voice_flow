@@ -60,7 +60,8 @@ class ReportFieldValue(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     report_id = db.Column(db.Integer, db.ForeignKey('reports.id'), nullable=False, index=True)
-    field_id = db.Column(db.Integer, db.ForeignKey('template_fields.id'), nullable=False, index=True)
+    field_id = db.Column(db.Integer, db.ForeignKey('template_fields.id'), nullable=True, index=True)
+    custom_field_name = db.Column(db.String(255), nullable=True)  # For custom fields not in template
     field_value = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -71,7 +72,12 @@ class ReportFieldValue(db.Model):
             'id': self.id,
             'report_id': self.report_id,
             'field_id': self.field_id,
+            'custom_field_name': self.custom_field_name,
             'field_value': self.field_value,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
+
+    def is_custom_field(self):
+        """Check if this is a custom field (not from template)"""
+        return self.field_id is None and self.custom_field_name is not None

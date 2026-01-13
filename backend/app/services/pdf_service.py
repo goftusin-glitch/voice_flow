@@ -141,6 +141,30 @@ class PDFService:
 
                 elements.append(Spacer(1, 0.1 * inch))
 
+        # Add custom fields if available
+        if report_data.get('custom_fields'):
+            custom_fields_heading = Paragraph('Custom Fields', heading_style)
+            elements.append(custom_fields_heading)
+            elements.append(Spacer(1, 0.1 * inch))
+
+            for custom_field in report_data['custom_fields']:
+                field_label = Paragraph(
+                    f"<b>{custom_field.get('custom_field_name', 'N/A')}:</b>",
+                    normal_style
+                )
+                elements.append(field_label)
+
+                field_value = custom_field.get('value', 'N/A')
+                # Handle long text values
+                if len(str(field_value)) > 100:
+                    field_value_para = Paragraph(str(field_value), normal_style)
+                    elements.append(field_value_para)
+                else:
+                    field_value_para = Paragraph(str(field_value), normal_style)
+                    elements.append(field_value_para)
+
+                elements.append(Spacer(1, 0.1 * inch))
+
         # Add transcription if available
         if report_data.get('transcription'):
             elements.append(PageBreak())

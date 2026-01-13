@@ -56,6 +56,7 @@ export const AnalyzeCall: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [editedFieldValues, setEditedFieldValues] = useState<Record<number, any>>({});
   const [reportTitle, setReportTitle] = useState('');
+  const [customFields, setCustomFields] = useState<Array<{ custom_field_name: string; value: string | number }>>([]);
 
   // Loading states
   const [uploading, setUploading] = useState(false);
@@ -199,11 +200,15 @@ export const AnalyzeCall: React.FC = () => {
         value: value,
       }));
 
+      // Filter out custom fields with empty names
+      const validCustomFields = customFields.filter(cf => cf.custom_field_name.trim() !== '');
+
       // Finalize report
       const response = await analysisService.finalizeAnalysis({
         analysis_id: analysisId,
         title: reportTitle,
         field_values: fieldValues,
+        custom_fields: validCustomFields,
       });
 
       toast.success('Report created successfully!');
@@ -230,12 +235,16 @@ export const AnalyzeCall: React.FC = () => {
         value: value,
       }));
 
+      // Filter out custom fields with empty names
+      const validCustomFields = customFields.filter(cf => cf.custom_field_name.trim() !== '');
+
       // Save as draft
       await reportsService.saveDraft({
         analysis_id: analysisId,
         title: reportTitle,
         summary: analysisResult?.summary,
         field_values: fieldValues,
+        custom_fields: validCustomFields,
       });
 
       toast.success('Draft saved successfully!');
@@ -256,6 +265,7 @@ export const AnalyzeCall: React.FC = () => {
     setAnalysisResult(null);
     setEditedFieldValues({});
     setReportTitle('');
+    setCustomFields([]);
   };
 
   const getActiveStep = () => {
@@ -770,6 +780,8 @@ export const AnalyzeCall: React.FC = () => {
                     result={analysisResult}
                     onFieldValueChange={handleFieldValueChange}
                     editable={true}
+                    customFields={customFields}
+                    onCustomFieldsChange={setCustomFields}
                   />
                 </Box>
               </Fade>

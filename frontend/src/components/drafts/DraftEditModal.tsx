@@ -12,8 +12,8 @@ import {
   CircularProgress,
   Divider,
 } from '@mui/material';
-import { X, Save, CheckCircle } from 'lucide-react';
-import { Report, UpdateReportRequest } from '../../types/report';
+import { X, Save, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import { Report, UpdateReportRequest, CustomField } from '../../types/report';
 import { reportsService } from '../../services/reportsService';
 import { useToast } from '../common/CustomToast';
 
@@ -40,6 +40,12 @@ export const DraftEditModal: React.FC<DraftEditModalProps> = ({
       return acc;
     }, {} as Record<number, string | number>) || {}
   );
+  const [customFields, setCustomFields] = useState<Array<{ custom_field_name: string; value: string | number }>>(
+    draft.custom_fields?.map(cf => ({
+      custom_field_name: cf.custom_field_name,
+      value: cf.value
+    })) || []
+  );
   const [saving, setSaving] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
 
@@ -50,9 +56,33 @@ export const DraftEditModal: React.FC<DraftEditModalProps> = ({
     }));
   };
 
+  const handleAddCustomField = () => {
+    setCustomFields([...customFields, { custom_field_name: '', value: '' }]);
+  };
+
+  const handleCustomFieldNameChange = (index: number, name: string) => {
+    const updated = [...customFields];
+    updated[index].custom_field_name = name;
+    setCustomFields(updated);
+  };
+
+  const handleCustomFieldValueChange = (index: number, value: string | number) => {
+    const updated = [...customFields];
+    updated[index].value = value;
+    setCustomFields(updated);
+  };
+
+  const handleRemoveCustomField = (index: number) => {
+    const updated = customFields.filter((_, i) => i !== index);
+    setCustomFields(updated);
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
+
+      // Filter out custom fields with empty names
+      const validCustomFields = customFields.filter(cf => cf.custom_field_name.trim() !== '');
 
       const updateData: UpdateReportRequest = {
         title: editedTitle,
@@ -60,6 +90,7 @@ export const DraftEditModal: React.FC<DraftEditModalProps> = ({
           field_id: parseInt(fieldId),
           value,
         })),
+        custom_fields: validCustomFields,
       };
 
       await reportsService.updateReport(draft.id, updateData);
@@ -77,6 +108,9 @@ export const DraftEditModal: React.FC<DraftEditModalProps> = ({
     try {
       setFinalizing(true);
 
+      // Filter out custom fields with empty names
+      const validCustomFields = customFields.filter(cf => cf.custom_field_name.trim() !== '');
+
       // First save the changes
       const updateData: UpdateReportRequest = {
         title: editedTitle,
@@ -84,6 +118,7 @@ export const DraftEditModal: React.FC<DraftEditModalProps> = ({
           field_id: parseInt(fieldId),
           value,
         })),
+        custom_fields: validCustomFields,
       };
 
       await reportsService.updateReport(draft.id, updateData);
@@ -247,6 +282,89 @@ export const DraftEditModal: React.FC<DraftEditModalProps> = ({
           ) : (
             <Typography variant="body2" color="text.secondary">
               No fields to edit
+            </Typography>
+          )}
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        {/* Custom Fields */}
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Custom Fields
+          </Typography>
+          <Button
+            onClick={handleAddCustomField}
+            variant="outlined"
+            size="small"
+            startIcon={<Plus size={16} />}
+            sx={{
+              borderRadius: 2,
+              textTransform: 'none',
+            }}
+          >
+            Add Field
+          </Button>
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {customFields.length > 0 ? (
+            customFields.map((cf, index) => (
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
+                  bgcolor: 'grey.50',
+                }}
+              >
+                <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    placeholder="Field Name"
+                    value={cf.custom_field_name}
+                    onChange={(e) => handleCustomFieldNameChange(index, e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        bgcolor: 'white',
+                      },
+                    }}
+                  />
+                  <TextField
+                    fullWidth
+                    placeholder="Field Value"
+                    value={cf.value}
+                    onChange={(e) => handleCustomFieldValueChange(index, e.target.value)}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        bgcolor: 'white',
+                      },
+                    }}
+                  />
+                </Box>
+                <IconButton
+                  onClick={() => handleRemoveCustomField(index)}
+                  size="small"
+                  sx={{
+                    color: 'error.main',
+                    alignSelf: 'flex-start',
+                    '&:hover': {
+                      bgcolor: 'error.light',
+                    },
+                  }}
+                >
+                  <Trash2 size={20} />
+                </IconButton>
+              </Box>
+            ))
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No custom fields added yet. Click "Add Field" to create one.
             </Typography>
           )}
         </Box>

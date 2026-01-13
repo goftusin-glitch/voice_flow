@@ -1,0 +1,117 @@
+╔══════════════════════════════════════════════════════════════════╗
+║          VOICE FLOW - FINAL DEPLOYMENT COMMAND                   ║
+║          Copy and paste this ONE command to deploy               ║
+╚══════════════════════════════════════════════════════════════════╝
+
+SERVER: root@YOUR_SERVER_IP
+PASSWORD: YOUR_SERVER_PASSWORD
+
+═══════════════════════════════════════════════════════════════════
+STEP 1: Open PowerShell or Git Bash
+═══════════════════════════════════════════════════════════════════
+
+═══════════════════════════════════════════════════════════════════
+STEP 2: Connect to Server
+═══════════════════════════════════════════════════════════════════
+
+ssh root@YOUR_SERVER_IP
+
+(Enter password when prompted: YOUR_SERVER_PASSWORD)
+
+═══════════════════════════════════════════════════════════════════
+STEP 3: Copy and Paste This ENTIRE Command
+═══════════════════════════════════════════════════════════════════
+
+cd /opt && rm -rf voice_flow && git clone https://github.com/goftusin-glitch/voice_flow.git && cd voice_flow && cat > .env << 'ENV1'
+MYSQL_ROOT_PASSWORD=YOUR_MYSQL_ROOT_PASSWORD
+MYSQL_PASSWORD=YOUR_MYSQL_PASSWORD
+ENV1
+SECRET_KEY=$(openssl rand -hex 32) && JWT_SECRET_KEY=$(openssl rand -hex 32) && cat > backend/.env << ENV2
+SECRET_KEY=${SECRET_KEY}
+FLASK_ENV=production
+FLASK_DEBUG=False
+DATABASE_URL=mysql+pymysql://voiceflow:YOUR_MYSQL_PASSWORD@mysql:3306/voice_flow
+JWT_SECRET_KEY=${JWT_SECRET_KEY}
+OPENAI_API_KEY=YOUR_OPENAI_API_KEY
+MAIL_SERVER=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USE_TLS=True
+MAIL_USERNAME=YOUR_EMAIL@gmail.com
+MAIL_PASSWORD=YOUR_GMAIL_APP_PASSWORD
+FRONTEND_URL=https://YOUR_DOMAIN.com
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
+GOOGLE_REDIRECT_URI=https://backend.YOUR_DOMAIN.com/api/auth/google/callback
+ENV2
+mkdir -p certbot/conf certbot/www backend/uploads/audio backend/generated/pdfs && ufw --force enable && ufw allow 22/tcp && ufw allow 80/tcp && ufw allow 443/tcp && cp nginx/conf.d/voice_flow.conf nginx/conf.d/voice_flow.conf.backup && cat > nginx/conf.d/voice_flow.conf << 'NGINX1'
+server {
+    listen 80;
+    server_name backend.YOUR_DOMAIN.com;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / {
+        proxy_pass http://backend:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 500M;
+        proxy_connect_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+    }
+}
+server {
+    listen 80;
+    server_name YOUR_DOMAIN.com www.YOUR_DOMAIN.com;
+    location /.well-known/acme-challenge/ { root /var/www/certbot; }
+    location / {
+        proxy_pass http://frontend:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+NGINX1
+echo "Building containers..." && docker-compose build --no-cache && docker-compose up -d && sleep 30 && echo "Deployment complete!" && docker-compose ps
+
+═══════════════════════════════════════════════════════════════════
+STEP 4: Configure API Keys (IMPORTANT!)
+═══════════════════════════════════════════════════════════════════
+
+After the containers are built, edit the configuration:
+
+nano /opt/voice_flow/backend/.env
+
+Replace these values:
+- OPENAI_API_KEY=REPLACE_WITH_YOUR_KEY  →  Your OpenAI API key
+- MAIL_USERNAME=your-email@gmail.com  →  Your Gmail address
+- MAIL_PASSWORD=your-app-password  →  Your Gmail app password
+
+Save: Ctrl+X, then Y, then Enter
+
+Then restart:
+cd /opt/voice_flow && docker-compose restart backend
+
+═══════════════════════════════════════════════════════════════════
+STEP 5: Check Status
+═══════════════════════════════════════════════════════════════════
+
+docker-compose ps
+docker-compose logs -f
+
+═══════════════════════════════════════════════════════════════════
+STEP 6: Access Your Application
+═══════════════════════════════════════════════════════════════════
+
+Frontend: http://YOUR_SERVER_IP
+Backend: http://YOUR_SERVER_IP:5000
+
+═══════════════════════════════════════════════════════════════════
+
+NOTES:
+- Build time: 5-10 minutes
+- After build completes, configure DNS to point to YOUR_SERVER_IP
+- Once DNS works, obtain SSL certificates (see PRODUCTION_DEPLOYMENT_STEPS.md)
+
+═══════════════════════════════════════════════════════════════════

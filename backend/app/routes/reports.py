@@ -126,7 +126,8 @@ def update_report(current_user, report_id):
             user_id=current_user.id,
             team_id=team_id,
             title=data.get('title'),
-            field_values=data.get('field_values')
+            field_values=data.get('field_values'),
+            custom_fields=data.get('custom_fields')
         )
 
         return jsonify({
@@ -442,7 +443,8 @@ def save_draft(current_user):
             team_id=team_id,
             title=title,
             summary=data.get('summary'),
-            field_values=data.get('field_values', [])
+            field_values=data.get('field_values', []),
+            custom_fields=data.get('custom_fields', [])
         )
 
         return jsonify({

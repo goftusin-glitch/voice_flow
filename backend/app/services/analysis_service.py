@@ -351,7 +351,7 @@ Analyze now and return valid JSON."""
             return False
 
     @staticmethod
-    def create_report_from_analysis(analysis_id: int, user_id: int, title: str, field_values: list) -> Report:
+    def create_report_from_analysis(analysis_id: int, user_id: int, title: str, field_values: list, custom_fields: list = None) -> Report:
         """
         Create a finalized report from analysis results
 
@@ -360,6 +360,7 @@ Analyze now and return valid JSON."""
             user_id: ID of the user creating the report
             title: Report title
             field_values: List of field values from the analysis
+            custom_fields: Optional list of custom fields
 
         Returns:
             Report: Created report object
@@ -389,6 +390,21 @@ Analyze now and return valid JSON."""
                 field_value=str(fv['value']) if fv['value'] is not None else None
             )
             db.session.add(report_field_value)
+
+        # Add custom fields if provided
+        if custom_fields:
+            for cf in custom_fields:
+                custom_field_name = cf.get('custom_field_name')
+                value = cf.get('value')
+
+                if custom_field_name:  # Only add if name is provided
+                    custom_field_value = ReportFieldValue(
+                        report_id=report.id,
+                        field_id=None,
+                        custom_field_name=custom_field_name,
+                        field_value=str(value) if value is not None else None
+                    )
+                    db.session.add(custom_field_value)
 
         # Mark report as finalized
         report.finalize()

@@ -392,6 +392,7 @@ def finalize_analysis(current_user):
         analysis_id = data.get('analysis_id')
         title = data.get('title')
         field_values = data.get('field_values', [])
+        custom_fields = data.get('custom_fields', [])
 
         if not analysis_id or not title:
             return jsonify({
@@ -419,7 +420,8 @@ def finalize_analysis(current_user):
             analysis_id=analysis_id,
             user_id=current_user.id,
             title=title,
-            field_values=field_values
+            field_values=field_values,
+            custom_fields=custom_fields
         )
 
         return jsonify({
