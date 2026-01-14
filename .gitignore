@@ -33,11 +33,11 @@ instance/
 .env.local
 .env.*.local
 backend/.env
+backend/.env.production
+backend/.env.development
 frontend/.env
-
-# Keep production templates
-!backend/.env.production
-!frontend/.env.production
+frontend/.env.production
+frontend/.env.development
 
 # Database
 *.db
@@ -113,3 +113,11 @@ Thumbs.db
 *.temp
 ~*
 nul
+tmpclaude-*
+
+# Claude Code settings
+.claude/settings.local.json
+
+# Build archives
+*.tar.gz
+*.zip
