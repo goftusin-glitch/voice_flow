@@ -209,10 +209,9 @@ class ReportsService {
 
   async batchDeleteReports(reportIds: number[]): Promise<void> {
     try {
-      const response = await apiClient.post('/reports/batch-delete', {
+      await apiClient.post('/reports/batch-delete', {
         report_ids: reportIds,
       });
-      return response.data;
     } catch (error: any) {
       console.error('Batch delete error:', error);
       throw error;
@@ -221,10 +220,9 @@ class ReportsService {
 
   async batchFinalizeReports(reportIds: number[]): Promise<void> {
     try {
-      const response = await apiClient.post('/reports/batch-finalize', {
+      await apiClient.post('/reports/batch-finalize', {
         report_ids: reportIds,
       });
-      return response.data;
     } catch (error: any) {
       console.error('Batch finalize error:', error);
       throw error;

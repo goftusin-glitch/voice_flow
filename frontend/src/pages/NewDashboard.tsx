@@ -55,7 +55,7 @@ export const NewDashboard: React.FC = () => {
 
   const loadTemplates = async () => {
     try {
-      const data = await templatesService.getTemplates();
+      const data = await templatesService.getAllTemplates();
       setTemplates(data);
     } catch (error: any) {
       console.error('Failed to load templates:', error);

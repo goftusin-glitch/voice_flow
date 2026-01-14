@@ -76,7 +76,10 @@ class UnifiedDashboardService {
    * Get all draft reports
    */
   async getDrafts(page = 1, limit = 20): Promise<any> {
-    const response = await apiClient.get('/reports/drafts', {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: any;
+    }>('/reports/drafts', {
       params: { page, limit },
     });
 

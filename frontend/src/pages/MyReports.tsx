@@ -387,11 +387,7 @@ export const MyReports: React.FC = () => {
               setShowViewModal(false);
               setSelectedReport(null);
             }}
-            onDownloadPDF={() => handleDownloadPDF(selectedReport.id)}
-            onShare={() => {
-              setShowViewModal(false);
-              setShowShareModal(true);
-            }}
+            onUpdate={() => loadReports()}
           />
         )}
 

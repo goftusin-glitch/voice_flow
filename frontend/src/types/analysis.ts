@@ -42,9 +42,14 @@ export interface AnalyzeResponse {
 export interface FinalizeRequest {
   analysis_id: number;
   title: string;
-  field_values: Array<{
+  summary?: string;
+  field_values?: Array<{
     field_id: number;
     value: any;
+  }>;
+  custom_fields?: Array<{
+    custom_field_name: string;
+    value: string | number;
   }>;
 }
 

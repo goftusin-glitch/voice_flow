@@ -1,17 +1,7 @@
 import React, { useState } from 'react';
 import { FileText, Eye, Download, Mail, MessageCircle, Trash2, Clock, User, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
-
-interface Report {
-  id: number;
-  title: string;
-  template_name: string;
-  created_by_name: string;
-  created_at: string;
-  finalized_at: string;
-  summary?: string;
-  status: string;
-}
+import { Report } from '../../types/report';
 
 interface ReportsTableProps {
   reports: Report[];
@@ -185,13 +175,17 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                    {report.template_name}
+                    {report.template_name || report.template?.name || 'N/A'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-900">{report.created_by_name}</span>
+                    <span className="text-sm text-gray-900">
+                      {typeof report.created_by === 'string'
+                        ? report.created_by
+                        : report.created_by?.name || 'Unknown'}
+                    </span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
