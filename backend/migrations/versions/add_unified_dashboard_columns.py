@@ -1,7 +1,7 @@
 """Add unified dashboard columns to call_analyses
 
 Revision ID: add_unified_dashboard
-Revises: add_custom_fields_support
+Revises: a1b2c3d4e5f6
 Create Date: 2026-01-14
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'add_unified_dashboard'
-down_revision = 'add_custom_fields_support'
+down_revision = 'a1b2c3d4e5f6'
 branch_labels = None
 depends_on = None
 
