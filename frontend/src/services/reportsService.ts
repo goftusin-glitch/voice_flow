@@ -124,6 +124,7 @@ class ReportsService {
     title: string;
     summary?: string;
     field_values?: Array<{ field_id: number; value: any }>;
+    custom_fields?: Array<{ custom_field_name: string; value: string | number }>;
   }): Promise<{ draft_id: number; created_at: string }> {
     const response = await apiClient.post<{
       success: boolean;
