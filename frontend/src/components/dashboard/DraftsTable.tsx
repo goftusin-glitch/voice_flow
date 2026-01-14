@@ -18,6 +18,8 @@ interface DraftsTableProps {
   onEdit: (draftId: number) => void;
   onDelete: (draftId: number) => void;
   onFinalize: (draftId: number) => void;
+  onBatchDelete?: (draftIds: number[]) => void;
+  onBatchFinalize?: (draftIds: number[]) => void;
   loading?: boolean;
 }
 
@@ -26,6 +28,8 @@ export const DraftsTable: React.FC<DraftsTableProps> = ({
   onEdit,
   onDelete,
   onFinalize,
+  onBatchDelete,
+  onBatchFinalize,
   loading = false,
 }) => {
   const navigate = useNavigate();
@@ -83,6 +87,45 @@ export const DraftsTable: React.FC<DraftsTableProps> = ({
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Batch Operations Bar */}
+      {selectedDrafts.length > 0 && (
+        <div className="bg-purple-50 border-b border-purple-200 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-purple-900">
+              {selectedDrafts.length} {selectedDrafts.length === 1 ? 'draft' : 'drafts'} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {onBatchFinalize && (
+              <button
+                onClick={() => {
+                  onBatchFinalize(selectedDrafts);
+                  setSelectedDrafts([]);
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                Finalize Selected
+              </button>
+            )}
+            {onBatchDelete && (
+              <button
+                onClick={() => {
+                  if (window.confirm(`Are you sure you want to delete ${selectedDrafts.length} draft(s)?`)) {
+                    onBatchDelete(selectedDrafts);
+                    setSelectedDrafts([]);
+                  }
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Selected
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Table Header */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">

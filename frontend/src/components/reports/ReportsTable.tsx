@@ -21,6 +21,7 @@ interface ReportsTableProps {
   onShareEmail: (report: Report) => void;
   onShareWhatsApp: (reportId: number) => void;
   onDelete: (reportId: number) => void;
+  onBatchDelete?: (reportIds: number[]) => void;
   loading?: boolean;
 }
 
@@ -32,6 +33,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   onShareEmail,
   onShareWhatsApp,
   onDelete,
+  onBatchDelete,
   loading = false,
 }) => {
   const [selectedReports, setSelectedReports] = useState<number[]>([]);
@@ -86,6 +88,31 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Batch Operations Bar */}
+      {selectedReports.length > 0 && onBatchDelete && (
+        <div className="bg-purple-50 border-b border-purple-200 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-purple-900">
+              {selectedReports.length} {selectedReports.length === 1 ? 'report' : 'reports'} selected
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to delete ${selectedReports.length} report(s)?`)) {
+                  onBatchDelete(selectedReports);
+                  setSelectedReports([]);
+                }
+              }}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Selected
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">

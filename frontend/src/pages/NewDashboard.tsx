@@ -214,6 +214,28 @@ export const NewDashboard: React.FC = () => {
     }
   };
 
+  const handleBatchDeleteDrafts = async (draftIds: number[]) => {
+    try {
+      await reportsService.batchDeleteReports(draftIds);
+      toast.success(`${draftIds.length} draft(s) deleted successfully`);
+      await Promise.all([loadDrafts(), loadMetrics()]);
+    } catch (error: any) {
+      console.error('Failed to delete drafts:', error);
+      toast.error('Failed to delete drafts');
+    }
+  };
+
+  const handleBatchFinalizeDrafts = async (draftIds: number[]) => {
+    try {
+      await reportsService.batchFinalizeReports(draftIds);
+      toast.success(`${draftIds.length} draft(s) finalized successfully`);
+      await Promise.all([loadDrafts(), loadMetrics()]);
+    } catch (error: any) {
+      console.error('Failed to finalize drafts:', error);
+      toast.error('Failed to finalize drafts');
+    }
+  };
+
   const filteredDrafts = drafts.filter((draft) => {
     const matchesSearch =
       draft.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -347,6 +369,8 @@ export const NewDashboard: React.FC = () => {
           onEdit={handleEditDraft}
           onDelete={handleDeleteDraft}
           onFinalize={handleFinalizeDraft}
+          onBatchDelete={handleBatchDeleteDrafts}
+          onBatchFinalize={handleBatchFinalizeDrafts}
           loading={draftsLoading}
         />
       </div>

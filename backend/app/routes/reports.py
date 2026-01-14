@@ -693,3 +693,129 @@ def create_from_input(current_user):
             'success': False,
             'message': f'Failed to create report: {str(e)}'
         }), 500
+
+
+@reports_bp.route('/batch-delete', methods=['POST'])
+@token_required
+def batch_delete_reports(current_user):
+    """Delete multiple reports at once"""
+    try:
+        data = request.get_json()
+        report_ids = data.get('report_ids', [])
+
+        if not report_ids or not isinstance(report_ids, list):
+            return jsonify({
+                'success': False,
+                'message': 'Report IDs array is required'
+            }), 400
+
+        team_id = get_user_team_id(current_user.id)
+        deleted_count = 0
+        failed_ids = []
+
+        for report_id in report_ids:
+            try:
+                # Get report and verify access
+                report = Report.query.get(report_id)
+                if not report:
+                    failed_ids.append(report_id)
+                    continue
+
+                # Check if user has access (same team)
+                if report.team_id != team_id:
+                    failed_ids.append(report_id)
+                    continue
+
+                # Delete report
+                db.session.delete(report)
+                deleted_count += 1
+
+            except Exception as e:
+                print(f"Error deleting report {report_id}: {str(e)}")
+                failed_ids.append(report_id)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'deleted_count': deleted_count,
+                'failed_ids': failed_ids
+            },
+            'message': f'Successfully deleted {deleted_count} report(s)'
+        }), 200
+
+    except Exception as e:
+        print(f"Error in batch delete: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to delete reports'
+        }), 500
+
+
+@reports_bp.route('/batch-finalize', methods=['POST'])
+@token_required
+def batch_finalize_reports(current_user):
+    """Finalize multiple draft reports at once"""
+    try:
+        data = request.get_json()
+        report_ids = data.get('report_ids', [])
+
+        if not report_ids or not isinstance(report_ids, list):
+            return jsonify({
+                'success': False,
+                'message': 'Report IDs array is required'
+            }), 400
+
+        team_id = get_user_team_id(current_user.id)
+        finalized_count = 0
+        failed_ids = []
+
+        for report_id in report_ids:
+            try:
+                # Get report and verify access
+                report = Report.query.get(report_id)
+                if not report:
+                    failed_ids.append(report_id)
+                    continue
+
+                # Check if user has access (same team)
+                if report.team_id != team_id:
+                    failed_ids.append(report_id)
+                    continue
+
+                # Check if already finalized
+                if report.status == 'finalized':
+                    failed_ids.append(report_id)
+                    continue
+
+                # Finalize report
+                report.status = 'finalized'
+                report.finalized_at = datetime.utcnow()
+                finalized_count += 1
+
+            except Exception as e:
+                print(f"Error finalizing report {report_id}: {str(e)}")
+                failed_ids.append(report_id)
+
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'finalized_count': finalized_count,
+                'failed_ids': failed_ids
+            },
+            'message': f'Successfully finalized {finalized_count} report(s)'
+        }), 200
+
+    except Exception as e:
+        print(f"Error in batch finalize: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to finalize reports'
+        }), 500

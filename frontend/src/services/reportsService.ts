@@ -206,6 +206,30 @@ class ReportsService {
       throw error;
     }
   }
+
+  async batchDeleteReports(reportIds: number[]): Promise<void> {
+    try {
+      const response = await apiClient.post('/reports/batch-delete', {
+        report_ids: reportIds,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Batch delete error:', error);
+      throw error;
+    }
+  }
+
+  async batchFinalizeReports(reportIds: number[]): Promise<void> {
+    try {
+      const response = await apiClient.post('/reports/batch-finalize', {
+        report_ids: reportIds,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('Batch finalize error:', error);
+      throw error;
+    }
+  }
 }
 
 export const reportsService = new ReportsService();

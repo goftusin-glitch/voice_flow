@@ -146,6 +146,17 @@ export const MyReports: React.FC = () => {
     }
   };
 
+  const handleBatchDeleteReports = async (reportIds: number[]) => {
+    try {
+      await reportsService.batchDeleteReports(reportIds);
+      toast.success(`${reportIds.length} report(s) deleted successfully`);
+      await loadReports();
+    } catch (error: any) {
+      console.error('Failed to delete reports:', error);
+      toast.error('Failed to delete reports');
+    }
+  };
+
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -307,6 +318,7 @@ export const MyReports: React.FC = () => {
           onShareEmail={handleShareEmail}
           onShareWhatsApp={handleShareWhatsApp}
           onDelete={handleDeleteReport}
+          onBatchDelete={handleBatchDeleteReports}
           loading={loading}
         />
 
