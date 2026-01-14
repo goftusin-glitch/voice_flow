@@ -579,3 +579,117 @@ View full report with PDF attachment.
             'success': False,
             'message': 'Failed to create WhatsApp share link'
         }), 500
+
+
+@reports_bp.route('/create-from-input', methods=['POST'])
+@token_required
+def create_from_input(current_user):
+    """Create a draft report directly from text, voice, or image input"""
+    try:
+        # Get user's team
+        team_id = get_user_team_id(current_user.id)
+
+        # Check if this is a multipart form (file upload) or JSON (text input)
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            # File upload (voice or image)
+            template_id = request.form.get('template_id', type=int)
+            input_type = request.form.get('input_type')  # 'voice' or 'image'
+            file = request.files.get('file')
+
+            if not template_id or not input_type or not file:
+                return jsonify({
+                    'success': False,
+                    'message': 'Template ID, input type, and file are required'
+                }), 400
+
+            # Save the file temporarily
+            from werkzeug.utils import secure_filename
+            import tempfile
+            filename = secure_filename(file.filename)
+            temp_dir = tempfile.gettempdir()
+            file_path = os.path.join(temp_dir, f"{current_user.id}_{filename}")
+            file.save(file_path)
+
+            try:
+                # Create draft from file
+                from app.services.analysis_service import AnalysisService
+
+                if input_type == 'voice':
+                    # Process audio file
+                    draft = AnalysisService.create_draft_from_audio(
+                        user_id=current_user.id,
+                        team_id=team_id,
+                        template_id=template_id,
+                        audio_path=file_path
+                    )
+                elif input_type == 'image':
+                    # Process image file
+                    draft = AnalysisService.create_draft_from_image(
+                        user_id=current_user.id,
+                        team_id=team_id,
+                        template_id=template_id,
+                        image_path=file_path
+                    )
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': 'Invalid input type. Must be "voice" or "image"'
+                    }), 400
+
+                return jsonify({
+                    'success': True,
+                    'data': {
+                        'draft_id': draft['id'],
+                        'title': draft['title'],
+                        'created_at': draft['created_at']
+                    }
+                }), 201
+
+            finally:
+                # Clean up temporary file
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+        else:
+            # JSON request (text input)
+            data = request.get_json()
+            template_id = data.get('template_id')
+            text_input = data.get('text')
+
+            if not template_id or not text_input:
+                return jsonify({
+                    'success': False,
+                    'message': 'Template ID and text input are required'
+                }), 400
+
+            # Create draft from text
+            from app.services.analysis_service import AnalysisService
+            draft = AnalysisService.create_draft_from_text(
+                user_id=current_user.id,
+                team_id=team_id,
+                template_id=template_id,
+                text=text_input
+            )
+
+            return jsonify({
+                'success': True,
+                'data': {
+                    'draft_id': draft['id'],
+                    'title': draft['title'],
+                    'created_at': draft['created_at']
+                }
+            }), 201
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 400
+    except Exception as e:
+        print(f"Error creating report from input: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Failed to create report: {str(e)}'
+        }), 500

@@ -602,3 +602,228 @@ Provide the extracted information as a structured text that can be analyzed."""
             # Fallback: return first N words of transcription
             words = transcription.split()[:50]
             return " ".join(words) + "..."
+
+    @staticmethod
+    def create_draft_from_text(user_id: int, team_id: int, template_id: int, text: str) -> dict:
+        """
+        Create a draft report directly from text input
+
+        Args:
+            user_id: User creating the draft
+            team_id: Team ID
+            template_id: Template to use for analysis
+            text: Input text to analyze
+
+        Returns:
+            dict: Draft report details
+        """
+        from app.services.audio_service import AudioService
+        from app.services.report_service import ReportService
+
+        # Get template
+        template = ReportTemplate.query.get(template_id)
+        if not template:
+            raise ValueError("Template not found")
+
+        # Create analysis record
+        analysis = CallAnalysis(
+            user_id=user_id,
+            team_id=team_id,
+            template_id=template_id,
+            input_type='text',
+            input_text=text,
+            transcription=text
+        )
+        db.session.add(analysis)
+        db.session.flush()  # Get analysis ID
+
+        # Analyze text using AI
+        analysis_result = AnalysisService.analyze_transcription(text, template)
+
+        # Generate title
+        title = f"Report from text - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
+
+        # Extract field values
+        field_values = []
+        for field in template.fields:
+            value = analysis_result.get('field_values', {}).get(field.field_name)
+            if value:
+                field_values.append({
+                    'field_id': field.id,
+                    'value': value
+                })
+
+        # Create draft report
+        draft = ReportService.create_draft_report(
+            analysis_id=analysis.id,
+            user_id=user_id,
+            team_id=team_id,
+            title=title,
+            summary=analysis_result.get('summary'),
+            field_values=field_values,
+            custom_fields=[]
+        )
+
+        db.session.commit()
+
+        return {
+            'id': draft.id,
+            'title': draft.title,
+            'created_at': draft.created_at.isoformat() if draft.created_at else None
+        }
+
+    @staticmethod
+    def create_draft_from_audio(user_id: int, team_id: int, template_id: int, audio_path: str) -> dict:
+        """
+        Create a draft report directly from audio input
+
+        Args:
+            user_id: User creating the draft
+            team_id: Team ID
+            template_id: Template to use for analysis
+            audio_path: Path to audio file
+
+        Returns:
+            dict: Draft report details
+        """
+        from app.services.audio_service import AudioService
+        from app.services.transcription_service import TranscriptionService
+        from app.services.report_service import ReportService
+
+        # Get template
+        template = ReportTemplate.query.get(template_id)
+        if not template:
+            raise ValueError("Template not found")
+
+        # Get audio duration
+        try:
+            audio_duration = AudioService.get_audio_duration(audio_path)
+        except Exception as e:
+            print(f"Error getting audio duration: {e}")
+            audio_duration = 0
+
+        # Transcribe audio
+        transcription = TranscriptionService.transcribe_audio(audio_path)
+        if not transcription:
+            raise ValueError("Failed to transcribe audio")
+
+        # Create analysis record
+        analysis = CallAnalysis(
+            user_id=user_id,
+            team_id=team_id,
+            template_id=template_id,
+            input_type='audio',
+            audio_file_path=audio_path,
+            audio_duration=audio_duration,
+            transcription=transcription
+        )
+        db.session.add(analysis)
+        db.session.flush()  # Get analysis ID
+
+        # Analyze transcription using AI
+        analysis_result = AnalysisService.analyze_transcription(transcription, template)
+
+        # Generate title
+        title = f"Report from audio - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
+
+        # Extract field values
+        field_values = []
+        for field in template.fields:
+            value = analysis_result.get('field_values', {}).get(field.field_name)
+            if value:
+                field_values.append({
+                    'field_id': field.id,
+                    'value': value
+                })
+
+        # Create draft report
+        draft = ReportService.create_draft_report(
+            analysis_id=analysis.id,
+            user_id=user_id,
+            team_id=team_id,
+            title=title,
+            summary=analysis_result.get('summary'),
+            field_values=field_values,
+            custom_fields=[]
+        )
+
+        db.session.commit()
+
+        return {
+            'id': draft.id,
+            'title': draft.title,
+            'created_at': draft.created_at.isoformat() if draft.created_at else None
+        }
+
+    @staticmethod
+    def create_draft_from_image(user_id: int, team_id: int, template_id: int, image_path: str) -> dict:
+        """
+        Create a draft report directly from image input
+
+        Args:
+            user_id: User creating the draft
+            team_id: Team ID
+            template_id: Template to use for analysis
+            image_path: Path to image file
+
+        Returns:
+            dict: Draft report details
+        """
+        from app.services.report_service import ReportService
+
+        # Get template
+        template = ReportTemplate.query.get(template_id)
+        if not template:
+            raise ValueError("Template not found")
+
+        # Extract text/data from image using GPT-4 Vision
+        extracted_text = AnalysisService.extract_text_from_image(image_path, template)
+        if not extracted_text:
+            raise ValueError("Failed to extract text from image")
+
+        # Create analysis record
+        analysis = CallAnalysis(
+            user_id=user_id,
+            team_id=team_id,
+            template_id=template_id,
+            input_type='image',
+            image_file_path=image_path,
+            transcription=extracted_text
+        )
+        db.session.add(analysis)
+        db.session.flush()  # Get analysis ID
+
+        # Analyze extracted text using AI
+        analysis_result = AnalysisService.analyze_transcription(extracted_text, template)
+
+        # Generate title
+        title = f"Report from image - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
+
+        # Extract field values
+        field_values = []
+        for field in template.fields:
+            value = analysis_result.get('field_values', {}).get(field.field_name)
+            if value:
+                field_values.append({
+                    'field_id': field.id,
+                    'value': value
+                })
+
+        # Create draft report
+        draft = ReportService.create_draft_report(
+            analysis_id=analysis.id,
+            user_id=user_id,
+            team_id=team_id,
+            title=title,
+            summary=analysis_result.get('summary'),
+            field_values=field_values,
+            custom_fields=[]
+        )
+
+        db.session.commit()
+
+        return {
+            'id': draft.id,
+            'title': draft.title,
+            'created_at': draft.created_at.isoformat() if draft.created_at else None
+        }
