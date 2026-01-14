@@ -12,9 +12,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/analyze', icon: Mic, label: 'Analyze Call' },
-    { path: '/reports', icon: FileText, label: 'My Reports' },
     { path: '/drafts', icon: BookmarkCheck, label: 'Drafts' },
+    { path: '/reports', icon: FileText, label: 'My Reports' },
     { path: '/templates', icon: FileStack, label: 'Templates' },
     { path: '/teams', icon: Users, label: 'Team' },
     { path: '/settings', icon: Settings, label: 'Settings' },

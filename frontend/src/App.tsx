@@ -5,7 +5,7 @@ import { ToastProvider } from './components/common/CustomToast';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
-import { Dashboard } from './pages/Dashboard';
+import { NewDashboard } from './pages/NewDashboard';
 import { ReportTemplates } from './pages/ReportTemplates';
 import { AnalyzeCall } from './pages/AnalyzeCall';
 import { MyReports } from './pages/MyReports';
@@ -30,7 +30,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <NewDashboard />
               </ProtectedRoute>
             }
           />
