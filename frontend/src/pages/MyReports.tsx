@@ -3,9 +3,8 @@ import { Layout } from '../components/common/Layout';
 import { reportsService } from '../services/reportsService';
 import { teamsService, UserTeam } from '../services/teamsService';
 import { Report } from '../types/report';
-import { Search, Eye, Download, Mail, MessageCircle, Trash2, ChevronLeft, ChevronRight, FileText, Calendar, User, Filter, Users, FileSpreadsheet } from 'lucide-react';
-import { Container, Card, CardContent, Box, Typography, TextField, InputAdornment, FormControl, InputLabel, Select, MenuItem, IconButton, Chip, CircularProgress, Fade, Grow, Pagination, Button, Menu } from '@mui/material';
-import { motion } from 'framer-motion';
+import { ReportsTable } from '../components/reports/ReportsTable';
+import { Search, ChevronDown, Users, FileText, CheckCircle2, Filter } from 'lucide-react';
 import { useToast } from '../components/common/CustomToast';
 import { ReportViewModal } from '../components/reports/ReportViewModal';
 import { ShareModal } from '../components/reports/ShareModal';
@@ -18,14 +17,13 @@ export const MyReports: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'finalized'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'finalized'>('finalized');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [teams, setTeams] = useState<UserTeam[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<UserTeam | null>(null);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const teamMenuOpen = Boolean(anchorEl);
+  const [showTeamDropdown, setShowTeamDropdown] = useState(false);
 
   useEffect(() => {
     loadTeams();
@@ -73,34 +71,26 @@ export const MyReports: React.FC = () => {
     }
   };
 
-  const handleTeamMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleTeamMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   const handleTeamSelect = (team: UserTeam) => {
     setSelectedTeam(team);
-    setPage(1); // Reset to first page when changing teams
-    handleTeamMenuClose();
+    setPage(1);
+    setShowTeamDropdown(false);
     toast.success(`Switched to ${team.team_name}`);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
-    setPage(1); // Reset to first page on search
+    setPage(1);
   };
 
-  const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setStatusFilter(e.target.value as 'all' | 'draft' | 'finalized');
-    setPage(1); // Reset to first page on filter change
+  const handleStatusFilterChange = (value: 'all' | 'draft' | 'finalized') => {
+    setStatusFilter(value);
+    setPage(1);
   };
 
-  const handleViewReport = async (report: Report) => {
+  const handleViewReport = async (reportId: number) => {
     try {
-      const fullReport = await reportsService.getReportById(report.id);
+      const fullReport = await reportsService.getReportById(reportId);
       setSelectedReport(fullReport);
       setShowViewModal(true);
     } catch (error: any) {
@@ -150,434 +140,259 @@ export const MyReports: React.FC = () => {
     try {
       await reportsService.deleteReport(reportId);
       toast.success('Report deleted successfully');
-      loadReports();
+      await loadReports();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to delete report');
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <Layout>
-      <Box sx={{ bgcolor: 'grey.50', minHeight: '100vh', py: 4 }}>
-        <Container maxWidth="lg">
-          {/* Header */}
-          <Fade in={true} timeout={600}>
-            <Box sx={{ mb: 6 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-lg">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">My Reports</h1>
+              <p className="text-gray-600 mt-1">View and manage your finalized reports</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Reports</p>
+                <p className="text-2xl font-bold text-gray-900">{total}</p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Finalized</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {reports.filter((r) => r.status === 'finalized').length}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Current Page</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {page} / {totalPages}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Filter className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Team Selector */}
+            {teams.length > 1 && (
+              <div className="relative lg:w-64">
+                <button
+                  onClick={() => setShowTeamDropdown(!showTeamDropdown)}
+                  className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg flex items-center justify-between hover:bg-gray-50 transition-colors"
                 >
-                  <FileText className="w-7 h-7 text-white" />
-                </Box>
-                <Box>
-                  <Typography variant="h3" fontWeight="bold" color="text.primary">
-                    My Reports
-                  </Typography>
-                  <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>
-                    View and manage all your call analysis reports
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-          </Fade>
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-900">
+                      {selectedTeam?.team_name || 'Select Team'}
+                    </span>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </button>
 
-          {/* Filters */}
-          <Grow in={true} timeout={800}>
-            <Card elevation={2} sx={{ mb: 4, borderRadius: 2 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
-                  {/* Team Selector */}
-                  {teams.length > 1 && (
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                      <Button
-                        variant="outlined"
-                        startIcon={<Users className="w-4 h-4" />}
-                        onClick={handleTeamMenuOpen}
-                        sx={{
-                          borderRadius: 2,
-                          textTransform: 'none',
-                          fontWeight: 600,
-                          px: 3,
-                          py: 1.5,
-                          borderColor: 'primary.main',
-                          color: 'primary.main',
-                          whiteSpace: 'nowrap',
-                          '&:hover': {
-                            borderColor: 'primary.dark',
-                            bgcolor: 'primary.50',
-                          },
-                        }}
-                      >
-                        {selectedTeam?.team_name || 'Select Team'}
-                      </Button>
-                    </motion.div>
-                  )}
-
-                  <Menu
-                    anchorEl={anchorEl}
-                    open={teamMenuOpen}
-                    onClose={handleTeamMenuClose}
-                    PaperProps={{
-                      sx: {
-                        borderRadius: 2,
-                        mt: 1,
-                        minWidth: 250,
-                      },
-                    }}
-                  >
+                {showTeamDropdown && (
+                  <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg">
                     {teams.map((team) => (
-                      <MenuItem
+                      <button
                         key={team.team_id}
                         onClick={() => handleTeamSelect(team)}
-                        selected={selectedTeam?.team_id === team.team_id}
-                        sx={{
-                          py: 1.5,
-                          px: 2.5,
-                          borderRadius: 1,
-                          mx: 1,
-                          my: 0.5,
-                        }}
+                        className={`w-full px-4 py-2.5 text-left hover:bg-gray-50 transition-colors ${
+                          selectedTeam?.team_id === team.team_id ? 'bg-purple-50' : ''
+                        }`}
                       >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%' }}>
-                          <Users className="w-4 h-4 text-gray-500" />
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="body2" fontWeight={600}>
-                              {team.team_name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {team.is_owner ? 'Owner' : 'Member'}
-                            </Typography>
-                          </Box>
-                          {selectedTeam?.team_id === team.team_id && (
-                            <Chip label="Active" size="small" color="primary" sx={{ height: 20 }} />
-                          )}
-                        </Box>
-                      </MenuItem>
+                        <span className="text-sm font-medium text-gray-900">{team.team_name}</span>
+                        <span className="text-xs text-gray-500 ml-2">
+                          ({team.role === 'owner' ? 'Owner' : 'Member'})
+                        </span>
+                      </button>
                     ))}
-                  </Menu>
-                </Box>
+                  </div>
+                )}
+              </div>
+            )}
 
-                <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                  <TextField
-                    fullWidth
-                    placeholder="Search reports..."
-                    value={search}
-                    onChange={handleSearchChange}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Search className="w-5 h-5 text-gray-400" />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      flex: 1,
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                      },
-                    }}
-                  />
-                  <FormControl sx={{ minWidth: 200 }}>
-                    <InputLabel id="status-filter-label">
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Filter className="w-4 h-4" />
-                        Status
-                      </Box>
-                    </InputLabel>
-                    <Select
-                      labelId="status-filter-label"
-                      value={statusFilter}
-                      label="Status"
-                      onChange={(e) => {
-                        setStatusFilter(e.target.value as 'all' | 'draft' | 'finalized');
-                        setPage(1);
-                      }}
-                      sx={{ borderRadius: 2 }}
-                    >
-                      <MenuItem value="all">All Status</MenuItem>
-                      <MenuItem value="draft">Draft</MenuItem>
-                      <MenuItem value="finalized">Finalized</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grow>
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={handleSearchChange}
+                placeholder="Search reports..."
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              />
+            </div>
 
-          {/* Reports List */}
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 12 }}>
-              <CircularProgress size={60} thickness={4} />
-            </Box>
-          ) : reports.length === 0 ? (
-            <Fade in={true} timeout={800}>
-              <Card elevation={2} sx={{ borderRadius: 3, p: 8, textAlign: 'center' }}>
-                <Box
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    bgcolor: 'grey.100',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mx: 'auto',
-                    mb: 3,
-                  }}
-                >
-                  <FileText className="w-10 h-10 text-gray-400" />
-                </Box>
-                <Typography variant="h6" color="text.secondary" fontWeight={500}>
-                  No reports found
-                </Typography>
-                <Typography variant="body2" color="text.disabled" sx={{ mt: 1 }}>
-                  {search || statusFilter !== 'all'
-                    ? 'Try adjusting your filters'
-                    : 'Start by analyzing your first call'}
-                </Typography>
-              </Card>
-            </Fade>
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {reports.map((report, index) => (
-                <Grow key={report.id} in={true} timeout={600 + index * 100}>
-                  <motion.div
-                    whileHover={{ scale: 1.01, y: -2 }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                  >
-                    <Card
-                      elevation={2}
-                      sx={{
-                        borderRadius: 3,
-                        overflow: 'hidden',
-                        '&:hover': {
-                          boxShadow: 6,
-                        },
-                        transition: 'box-shadow 0.3s ease-in-out',
-                      }}
-                    >
-                      <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                          <Box sx={{ flex: 1, minWidth: 0, mr: 2 }}>
-                            {/* Title */}
-                            <Typography variant="h6" fontWeight={600} sx={{ mb: 1.5 }}>
-                              {report.title}
-                            </Typography>
+            {/* Status Filter */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleStatusFilterChange('all')}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === 'all'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => handleStatusFilterChange('finalized')}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === 'finalized'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Finalized
+              </button>
+              <button
+                onClick={() => handleStatusFilterChange('draft')}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  statusFilter === 'draft'
+                    ? 'bg-yellow-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Drafts
+              </button>
+            </div>
+          </div>
+        </div>
 
-                            {/* Meta Information */}
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <FileText className="w-4 h-4 text-gray-500" />
-                                <Typography variant="body2" color="text.secondary">
-                                  {report.template_name || 'Unknown'}
-                                </Typography>
-                              </Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <User className="w-4 h-4 text-gray-500" />
-                                <Typography variant="body2" color="text.secondary">
-                                  {typeof report.created_by === 'string'
-                                    ? report.created_by
-                                    : report.created_by?.name || 'Unknown'}
-                                </Typography>
-                              </Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <Calendar className="w-4 h-4 text-gray-500" />
-                                <Typography variant="body2" color="text.secondary">
-                                  {formatDate(report.created_at)}
-                                </Typography>
-                              </Box>
-                            </Box>
+        {/* Reports Table */}
+        <ReportsTable
+          reports={reports}
+          onView={handleViewReport}
+          onDownloadPDF={handleDownloadPDF}
+          onDownloadExcel={handleDownloadExcel}
+          onShareEmail={handleShareEmail}
+          onShareWhatsApp={handleShareWhatsApp}
+          onDelete={handleDeleteReport}
+          loading={loading}
+        />
 
-                            {/* Summary */}
-                            {report.summary && (
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{
-                                  mb: 2,
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                {report.summary}
-                              </Typography>
-                            )}
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Showing {reports.length} of {total} reports
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNum = index + 1;
+                  // Show first, last, current, and adjacent pages
+                  if (
+                    pageNum === 1 ||
+                    pageNum === totalPages ||
+                    Math.abs(pageNum - page) <= 1
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          page === pageNum
+                            ? 'bg-purple-600 text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (Math.abs(pageNum - page) === 2) {
+                    return (
+                      <span key={pageNum} className="px-2 text-gray-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
-                            {/* Status Chip */}
-                            <Chip
-                              label={report.status.charAt(0).toUpperCase() + report.status.slice(1)}
-                              size="small"
-                              color={report.status === 'finalized' ? 'success' : 'warning'}
-                              sx={{ fontWeight: 500 }}
-                            />
-                          </Box>
+        {/* Modals */}
+        {showViewModal && selectedReport && (
+          <ReportViewModal
+            report={selectedReport}
+            onClose={() => {
+              setShowViewModal(false);
+              setSelectedReport(null);
+            }}
+            onDownloadPDF={() => handleDownloadPDF(selectedReport.id)}
+            onShare={() => {
+              setShowViewModal(false);
+              setShowShareModal(true);
+            }}
+          />
+        )}
 
-                          {/* Action Buttons */}
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                              <IconButton
-                                onClick={() => handleViewReport(report)}
-                                color="primary"
-                                size="medium"
-                                title="View Report"
-                                sx={{
-                                  bgcolor: 'primary.50',
-                                  '&:hover': { bgcolor: 'primary.100' },
-                                }}
-                              >
-                                <Eye className="w-5 h-5" />
-                              </IconButton>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                              <IconButton
-                                onClick={() => handleDownloadPDF(report.id)}
-                                color="success"
-                                size="medium"
-                                title="Download PDF"
-                                sx={{
-                                  bgcolor: 'success.50',
-                                  '&:hover': { bgcolor: 'success.100' },
-                                }}
-                              >
-                                <Download className="w-5 h-5" />
-                              </IconButton>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                              <IconButton
-                                onClick={() => handleDownloadExcel(report.id)}
-                                sx={{
-                                  color: '#10b981',
-                                  bgcolor: '#d1fae5',
-                                  '&:hover': { bgcolor: '#a7f3d0' },
-                                }}
-                                size="medium"
-                                title="Download Excel"
-                              >
-                                <FileSpreadsheet className="w-5 h-5" />
-                              </IconButton>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                              <IconButton
-                                onClick={() => handleShareEmail(report)}
-                                sx={{
-                                  color: 'purple',
-                                  bgcolor: '#f3e8ff',
-                                  '&:hover': { bgcolor: '#e9d5ff' },
-                                }}
-                                size="medium"
-                                title="Share Report"
-                              >
-                                <Mail className="w-5 h-5" />
-                              </IconButton>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                              <IconButton
-                                onClick={() => handleShareWhatsApp(report.id)}
-                                sx={{
-                                  color: '#10b981',
-                                  bgcolor: '#d1fae5',
-                                  '&:hover': { bgcolor: '#a7f3d0' },
-                                }}
-                                size="medium"
-                                title="Share via WhatsApp"
-                              >
-                                <MessageCircle className="w-5 h-5" />
-                              </IconButton>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                              <IconButton
-                                onClick={() => handleDeleteReport(report.id)}
-                                color="error"
-                                size="medium"
-                                title="Delete Report"
-                                sx={{
-                                  bgcolor: 'error.50',
-                                  '&:hover': { bgcolor: 'error.100' },
-                                }}
-                              >
-                                <Trash2 className="w-5 h-5" />
-                              </IconButton>
-                            </motion.div>
-                          </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                </Grow>
-              ))}
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <Fade in={true} timeout={1000}>
-                  <Box sx={{ mt: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Showing <strong>{(page - 1) * 20 + 1}</strong> to{' '}
-                      <strong>{Math.min(page * 20, total)}</strong> of <strong>{total}</strong> reports
-                    </Typography>
-                    <Pagination
-                      count={totalPages}
-                      page={page}
-                      onChange={(_, value) => setPage(value)}
-                      color="primary"
-                      size="large"
-                      showFirstButton
-                      showLastButton
-                      sx={{
-                        '& .MuiPaginationItem-root': {
-                          fontWeight: 500,
-                        },
-                      }}
-                    />
-                  </Box>
-                </Fade>
-              )}
-            </Box>
-          )}
-
-          {/* Modals */}
-          {showViewModal && selectedReport && (
-            <ReportViewModal
-              report={selectedReport}
-              onClose={() => {
-                setShowViewModal(false);
-                setSelectedReport(null);
-              }}
-              onUpdate={loadReports}
-            />
-          )}
-
-          {showShareModal && selectedReport && (
-            <ShareModal
-              report={selectedReport}
-              onClose={() => {
-                setShowShareModal(false);
-                setSelectedReport(null);
-              }}
-            />
-          )}
-        </Container>
-      </Box>
+        {showShareModal && selectedReport && (
+          <ShareModal
+            report={selectedReport}
+            onClose={() => {
+              setShowShareModal(false);
+              setSelectedReport(null);
+            }}
+          />
+        )}
+      </div>
     </Layout>
   );
 };
