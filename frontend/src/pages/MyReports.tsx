@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/common/Layout';
 import { reportsService } from '../services/reportsService';
 import { teamsService, UserTeam } from '../services/teamsService';
@@ -11,6 +12,7 @@ import { ShareModal } from '../components/reports/ShareModal';
 
 export const MyReports: React.FC = () => {
   const toast = useToast();
+  const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -96,6 +98,10 @@ export const MyReports: React.FC = () => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to load report');
     }
+  };
+
+  const handleEditReport = (reportId: number) => {
+    navigate(`/reports/${reportId}/edit`);
   };
 
   const handleDownloadPDF = async (reportId: number) => {
@@ -313,6 +319,7 @@ export const MyReports: React.FC = () => {
         <ReportsTable
           reports={reports}
           onView={handleViewReport}
+          onEdit={handleEditReport}
           onDownloadPDF={handleDownloadPDF}
           onDownloadExcel={handleDownloadExcel}
           onShareEmail={handleShareEmail}

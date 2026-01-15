@@ -4,6 +4,9 @@ from app.services.report_service import ReportService
 from app.services.pdf_service import PDFService
 from app.services.email_service import EmailService
 from app.models.team import TeamMember
+from app.models.report import Report
+from app import db
+from datetime import datetime
 import os
 
 reports_bp = Blueprint('reports', __name__)

@@ -259,7 +259,7 @@ class ReportService:
         total = query.count()
         reports = query.offset((page - 1) * limit).limit(limit).all()
 
-        # Format reports with additional info
+        # Format reports with additional info and field values
         report_list = []
         for report in reports:
             template = ReportTemplate.query.get(report.template_id)
@@ -267,12 +267,35 @@ class ReportService:
 
             report_dict = report.to_dict()
             report_dict['template_name'] = template.name if template else 'Unknown'
-            report_dict['created_by'] = f"{creator.first_name} {creator.last_name}" if creator else 'Unknown'
+            report_dict['created_by_name'] = f"{creator.first_name} {creator.last_name}" if creator else 'Unknown'
+
+            # Include field values for table display
+            field_values = []
+            for fv in report.field_values:
+                if fv.is_custom_field():
+                    field_values.append({
+                        'field_id': None,
+                        'field_label': fv.custom_field_name,
+                        'field_type': 'text',
+                        'field_name': fv.custom_field_name.lower().replace(' ', '_'),
+                        'value': fv.field_value
+                    })
+                else:
+                    field = TemplateField.query.get(fv.field_id)
+                    if field:
+                        field_values.append({
+                            'field_id': fv.field_id,
+                            'field_label': field.field_label,
+                            'field_type': field.field_type,
+                            'field_name': field.field_name,
+                            'value': fv.field_value
+                        })
+            report_dict['field_values'] = field_values
 
             report_list.append(report_dict)
 
         return {
-            'drafts': report_list,
+            'reports': report_list,
             'total': total,
             'page': page,
             'pages': (total + limit - 1) // limit

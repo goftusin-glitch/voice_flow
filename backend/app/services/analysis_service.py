@@ -644,11 +644,22 @@ Provide the extracted information as a structured text that can be analyzed."""
         # Generate title
         title = f"Report from text - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
 
+        # Convert fields list to dictionary for easier lookup
+        fields_dict = {}
+        if 'fields' in analysis_result and isinstance(analysis_result['fields'], list):
+            for f in analysis_result['fields']:
+                if 'field_name' in f and 'value' in f:
+                    fields_dict[f['field_name']] = f['value']
+
         # Extract field values with full field info
         field_values = []
         field_values_for_response = []
         for field in template.fields:
-            value = analysis_result.get('field_values', {}).get(field.field_name)
+            # Look up value from the fields dictionary
+            value = fields_dict.get(field.field_name, '')
+            # Handle "Not mentioned" as empty
+            if value == "Not mentioned" or value is None:
+                value = ''
             field_values.append({
                 'field_id': field.id,
                 'value': value if value else ''
@@ -741,11 +752,22 @@ Provide the extracted information as a structured text that can be analyzed."""
         # Generate title
         title = f"Report from audio - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
 
+        # Convert fields list to dictionary for easier lookup
+        fields_dict = {}
+        if 'fields' in analysis_result and isinstance(analysis_result['fields'], list):
+            for f in analysis_result['fields']:
+                if 'field_name' in f and 'value' in f:
+                    fields_dict[f['field_name']] = f['value']
+
         # Extract field values with full field info
         field_values = []
         field_values_for_response = []
         for field in template.fields:
-            value = analysis_result.get('field_values', {}).get(field.field_name)
+            # Look up value from the fields dictionary
+            value = fields_dict.get(field.field_name, '')
+            # Handle "Not mentioned" as empty
+            if value == "Not mentioned" or value is None:
+                value = ''
             field_values.append({
                 'field_id': field.id,
                 'value': value if value else ''
@@ -828,11 +850,22 @@ Provide the extracted information as a structured text that can be analyzed."""
         # Generate title
         title = f"Report from image - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
 
+        # Convert fields list to dictionary for easier lookup
+        fields_dict = {}
+        if 'fields' in analysis_result and isinstance(analysis_result['fields'], list):
+            for f in analysis_result['fields']:
+                if 'field_name' in f and 'value' in f:
+                    fields_dict[f['field_name']] = f['value']
+
         # Extract field values with full field info
         field_values = []
         field_values_for_response = []
         for field in template.fields:
-            value = analysis_result.get('field_values', {}).get(field.field_name)
+            # Look up value from the fields dictionary
+            value = fields_dict.get(field.field_name, '')
+            # Handle "Not mentioned" as empty
+            if value == "Not mentioned" or value is None:
+                value = ''
             field_values.append({
                 'field_id': field.id,
                 'value': value if value else ''

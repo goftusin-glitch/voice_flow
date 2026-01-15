@@ -1,11 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { FileText, Eye, Download, Mail, MessageCircle, Trash2, Clock, User, FileSpreadsheet } from 'lucide-react';
+import { FileText, Eye, Download, Mail, Trash2, Clock, User, FileSpreadsheet, Edit3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Report, ReportFieldValue } from '../../types/report';
 
 interface ReportsTableProps {
   reports: Report[];
   onView: (reportId: number) => void;
+  onEdit?: (reportId: number) => void;
   onDownloadPDF: (reportId: number) => void;
   onDownloadExcel?: (reportId: number) => void;
   onShareEmail: (report: Report) => void;
@@ -18,6 +19,7 @@ interface ReportsTableProps {
 export const ReportsTable: React.FC<ReportsTableProps> = ({
   reports,
   onView,
+  onEdit,
   onDownloadPDF,
   onDownloadExcel,
   onShareEmail,
@@ -56,13 +58,13 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     reports.forEach((report) => {
       if (report.field_values) {
         report.field_values.forEach((fv) => {
-          if (!fieldMap.has(fv.field_label)) {
+          if (fv.field_label && !fieldMap.has(fv.field_label)) {
             fieldMap.set(fv.field_label, fv.field_label);
           }
         });
       }
     });
-    return Array.from(fieldMap.keys()).slice(0, 5); // Limit to 5 columns
+    return Array.from(fieldMap.keys()).slice(0, 6); // Limit to 6 columns
   }, [reports]);
 
   // Helper to get field value for a report
@@ -71,7 +73,16 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     const field = report.field_values.find((fv) => fv.field_label === fieldLabel);
     if (!field || field.value === null || field.value === undefined || field.value === '') return '-';
     const value = String(field.value);
-    return value.length > 30 ? value.substring(0, 30) + '...' : value;
+    return value.length > 25 ? value.substring(0, 25) + '...' : value;
+  };
+
+  // Get created by name
+  const getCreatedByName = (report: Report): string => {
+    if (typeof report.created_by === 'string') return report.created_by;
+    if (report.created_by && typeof report.created_by === 'object') {
+      return report.created_by.name || `${report.created_by.first_name || ''} ${report.created_by.last_name || ''}`.trim() || 'Unknown';
+    }
+    return 'Unknown';
   };
 
   if (loading) {
@@ -131,7 +142,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left">
+              <th className="px-3 py-3 text-left">
                 <input
                   type="checkbox"
                   checked={selectedReports.length === reports.length && reports.length > 0}
@@ -139,22 +150,25 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                   className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Report Period
-              </th>
               {/* Dynamic field columns */}
               {fieldColumns.map((fieldLabel) => (
                 <th
                   key={fieldLabel}
-                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                 >
                   {fieldLabel}
                 </th>
               ))}
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Summary
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Template
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created By
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created Time
+              </th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -167,7 +181,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                   selectedReports.includes(report.id) ? 'bg-purple-50' : ''
                 }`}
               >
-                <td className="px-4 py-4 whitespace-nowrap">
+                <td className="px-3 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedReports.includes(report.id)}
@@ -175,43 +189,79 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                   />
                 </td>
-                {/* Report Period (date) */}
-                <td className="px-4 py-4 whitespace-nowrap">
-                  <span className="text-sm text-gray-600">
-                    {formatDate(report.created_at).split(' ')[0]}
-                  </span>
-                </td>
                 {/* Dynamic field value columns */}
                 {fieldColumns.map((fieldLabel) => (
-                  <td key={fieldLabel} className="px-4 py-4">
+                  <td key={fieldLabel} className="px-3 py-4">
                     <span className="text-sm text-gray-900">
                       {getFieldValue(report, fieldLabel)}
                     </span>
                   </td>
                 ))}
-                {/* Summary */}
-                <td className="px-4 py-4">
-                  <span className="text-sm text-gray-600 line-clamp-2">
-                    {report.summary
-                      ? report.summary.length > 80
-                        ? report.summary.substring(0, 80) + '...'
-                        : report.summary
-                      : '-'}
+                {/* Template */}
+                <td className="px-3 py-4 whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    {report.template?.name || 'Unknown'}
                   </span>
                 </td>
+                {/* Created By */}
+                <td className="px-3 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-1">
+                    <User className="w-3 h-3 text-gray-400" />
+                    <span className="text-sm text-gray-900">{getCreatedByName(report)}</span>
+                  </div>
+                </td>
+                {/* Created Time */}
+                <td className="px-3 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-1">
+                    <Clock className="w-3 h-3 text-gray-400" />
+                    <span className="text-sm text-gray-600">{formatDate(report.created_at)}</span>
+                  </div>
+                </td>
                 {/* Actions */}
-                <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div className="flex items-center justify-end gap-1">
+                <td className="px-3 py-4 whitespace-nowrap">
+                  <div className="flex items-center justify-center gap-1">
                     <button
                       onClick={() => onView(report.id)}
-                      className="text-blue-600 hover:text-blue-900 p-2 hover:bg-blue-50 rounded transition-colors"
+                      className="text-blue-600 hover:text-blue-900 p-1.5 hover:bg-blue-50 rounded transition-colors"
                       title="View report"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
+                    {onEdit && (
+                      <button
+                        onClick={() => onEdit(report.id)}
+                        className="text-green-600 hover:text-green-900 p-1.5 hover:bg-green-50 rounded transition-colors"
+                        title="Edit report"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => onShareEmail(report)}
+                      className="text-purple-600 hover:text-purple-900 p-1.5 hover:bg-purple-50 rounded transition-colors"
+                      title="Share via email (with PDF)"
+                    >
+                      <Mail className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => onDownloadPDF(report.id)}
+                      className="text-red-600 hover:text-red-800 p-1.5 hover:bg-red-50 rounded transition-colors"
+                      title="Download PDF"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
+                    {onDownloadExcel && (
+                      <button
+                        onClick={() => onDownloadExcel(report.id)}
+                        className="text-green-600 hover:text-green-800 p-1.5 hover:bg-green-50 rounded transition-colors"
+                        title="Download Excel"
+                      >
+                        <FileSpreadsheet className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => onDelete(report.id)}
-                      className="text-red-600 hover:text-red-900 p-2 hover:bg-red-50 rounded transition-colors"
+                      className="text-gray-500 hover:text-red-600 p-1.5 hover:bg-red-50 rounded transition-colors"
                       title="Delete report"
                     >
                       <Trash2 className="w-4 h-4" />
