@@ -80,7 +80,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   const getCreatedByName = (report: Report): string => {
     if (typeof report.created_by === 'string') return report.created_by;
     if (report.created_by && typeof report.created_by === 'object') {
-      return report.created_by.name || `${report.created_by.first_name || ''} ${report.created_by.last_name || ''}`.trim() || 'Unknown';
+      return report.created_by.name || 'Unknown';
     }
     return 'Unknown';
   };
