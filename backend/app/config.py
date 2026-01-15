@@ -28,7 +28,12 @@ class Config:
     # File Upload
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'uploads')
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB
-    ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'ogg', 'm4a', 'flac', 'webm', 'mp4'}
+    ALLOWED_AUDIO_EXTENSIONS = {
+        'mp3', 'wav', 'ogg', 'm4a', 'flac', 'webm', 'mp4', 'mpeg',
+        'aac', 'wma', 'aiff', 'aif', 'opus', 'amr', '3gp', '3gpp',
+        'caf', 'ac3', 'spx', 'au', 'gsm', 'mka', 'ra', 'rm',
+        'mid', 'midi', 'oga', 'mogg', 'wv', 'tta', 'voc'
+    }
 
     # Email - SMTP Configuration
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')

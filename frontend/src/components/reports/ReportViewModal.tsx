@@ -1,22 +1,29 @@
 import React, { useState } from 'react';
-import { X, Edit2, Save } from 'lucide-react';
+import { X, Edit2, Save, Plus, Trash2 } from 'lucide-react';
 import { Report, UpdateReportRequest } from '../../types/report';
 import { reportsService } from '../../services/reportsService';
 import { useToast } from '../common/CustomToast';
+
+interface CustomFieldInput {
+  name: string;
+  value: string;
+}
 
 interface ReportViewModalProps {
   report: Report;
   onClose: () => void;
   onUpdate: () => void;
+  startInEditMode?: boolean;
 }
 
 export const ReportViewModal: React.FC<ReportViewModalProps> = ({
   report,
   onClose,
   onUpdate,
+  startInEditMode = false,
 }) => {
   const toast = useToast();
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(startInEditMode);
   const [editedTitle, setEditedTitle] = useState(report.title);
   const [editedFieldValues, setEditedFieldValues] = useState<Record<number, string | number>>(
     report.field_values?.reduce((acc, fv) => {
@@ -24,6 +31,7 @@ export const ReportViewModal: React.FC<ReportViewModalProps> = ({
       return acc;
     }, {} as Record<number, string | number>) || {}
   );
+  const [newCustomFields, setNewCustomFields] = useState<CustomFieldInput[]>([]);
   const [saving, setSaving] = useState(false);
 
   const handleFieldValueChange = (fieldId: number, value: string | number) => {
@@ -33,9 +41,26 @@ export const ReportViewModal: React.FC<ReportViewModalProps> = ({
     }));
   };
 
+  const handleAddCustomField = () => {
+    setNewCustomFields((prev) => [...prev, { name: '', value: '' }]);
+  };
+
+  const handleRemoveCustomField = (index: number) => {
+    setNewCustomFields((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCustomFieldChange = (index: number, field: 'name' | 'value', value: string) => {
+    setNewCustomFields((prev) =>
+      prev.map((cf, i) => (i === index ? { ...cf, [field]: value } : cf))
+    );
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
+
+      // Filter out custom fields with empty names
+      const validCustomFields = newCustomFields.filter((cf) => cf.name.trim() !== '');
 
       const updateData: UpdateReportRequest = {
         title: editedTitle,
@@ -43,11 +68,16 @@ export const ReportViewModal: React.FC<ReportViewModalProps> = ({
           field_id: parseInt(fieldId),
           value,
         })),
+        custom_fields: validCustomFields.length > 0 ? validCustomFields.map((cf) => ({
+          custom_field_name: cf.name,
+          value: cf.value,
+        })) : undefined,
       };
 
       await reportsService.updateReport(report.id, updateData);
       toast.success('Report updated successfully');
       setIsEditing(false);
+      setNewCustomFields([]);
       onUpdate();
       onClose();
     } catch (error: any) {
@@ -231,6 +261,72 @@ export const ReportViewModal: React.FC<ReportViewModalProps> = ({
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Add New Custom Fields (only in edit mode) */}
+          {isEditing && (
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Add New Fields</h3>
+                <button
+                  type="button"
+                  onClick={handleAddCustomField}
+                  className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Field
+                </button>
+              </div>
+              {newCustomFields.length > 0 && (
+                <div className="space-y-4">
+                  {newCustomFields.map((cf, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1 space-y-3">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Field Name
+                            </label>
+                            <input
+                              type="text"
+                              value={cf.name}
+                              onChange={(e) => handleCustomFieldChange(index, 'name', e.target.value)}
+                              placeholder="Enter field name"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Field Value
+                            </label>
+                            <input
+                              type="text"
+                              value={cf.value}
+                              onChange={(e) => handleCustomFieldChange(index, 'value', e.target.value)}
+                              placeholder="Enter field value"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCustomField(index)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remove field"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {newCustomFields.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                  Click "Add Field" to add custom fields to this report
+                </p>
+              )}
             </div>
           )}
 

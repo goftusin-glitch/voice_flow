@@ -14,6 +14,7 @@ class ReportTemplate(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True, index=True)
+    shared_with_team = db.Column(db.Boolean, default=False, index=True)
 
     # Relationships
     fields = db.relationship('TemplateField', backref='template', lazy=True, cascade='all, delete-orphan', order_by='TemplateField.display_order')
@@ -31,6 +32,7 @@ class ReportTemplate(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
             'is_active': self.is_active,
+            'shared_with_team': self.shared_with_team,
             'field_count': len(self.fields) if self.fields else 0
         }
 

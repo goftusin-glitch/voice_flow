@@ -27,7 +27,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      'audio/*': ['.mp3', '.wav', '.ogg', '.m4a', '.flac', '.webm', '.mp4'],
+      'audio/*': [], // Accept all audio formats
     },
     multiple: false,
     disabled,
@@ -93,7 +93,7 @@ export const AudioUploader: React.FC<AudioUploaderProps> = ({
             </p>
             <p className="text-sm text-gray-500 mb-4">or click to browse</p>
             <p className="text-xs text-gray-400">
-              Supported formats: MP3, WAV, OGG, M4A, FLAC, WEBM, MP4
+              Supported formats: All audio formats (MP3, WAV, OGG, M4A, FLAC, AAC, WMA, etc.)
             </p>
             <p className="text-xs text-gray-400">Maximum file size: 500MB</p>
           </div>

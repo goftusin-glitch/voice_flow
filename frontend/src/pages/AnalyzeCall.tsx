@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/common/Layout';
 import { TemplateSelector } from '../components/analysis/TemplateSelector';
@@ -63,6 +63,101 @@ export const AnalyzeCall: React.FC = () => {
   const [analyzing, setAnalyzing] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
+
+  // Session storage key
+  const SESSION_STORAGE_KEY = 'voiceflow_analysis_session';
+
+  // Restore state from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const savedState = sessionStorage.getItem(SESSION_STORAGE_KEY);
+      if (savedState) {
+        const state = JSON.parse(savedState);
+
+        // Restore template
+        if (state.selectedTemplate) {
+          setSelectedTemplate(state.selectedTemplate);
+        }
+
+        // Restore input method
+        if (state.inputMethod) {
+          setInputMethod(state.inputMethod);
+        }
+
+        // Restore text input
+        if (state.textInput) {
+          setTextInput(state.textInput);
+        }
+
+        // Restore analysis ID
+        if (state.analysisId) {
+          setAnalysisId(state.analysisId);
+        }
+
+        // Restore analysis result
+        if (state.analysisResult) {
+          setAnalysisResult(state.analysisResult);
+        }
+
+        // Restore edited field values
+        if (state.editedFieldValues) {
+          setEditedFieldValues(state.editedFieldValues);
+        }
+
+        // Restore report title
+        if (state.reportTitle) {
+          setReportTitle(state.reportTitle);
+        }
+
+        // Restore custom fields
+        if (state.customFields) {
+          setCustomFields(state.customFields);
+        }
+
+        // Restore current step (only if we have analysis results)
+        if (state.currentStep && state.analysisResult) {
+          setCurrentStep(state.currentStep);
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring analysis session:', error);
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+  }, []);
+
+  // Save state to sessionStorage when it changes
+  useEffect(() => {
+    // Only save if we have meaningful data
+    if (currentStep === 'results' || analysisId || textInput.length > 50) {
+      const stateToSave = {
+        currentStep,
+        selectedTemplate,
+        inputMethod,
+        textInput,
+        analysisId,
+        analysisResult,
+        editedFieldValues,
+        reportTitle,
+        customFields,
+      };
+      sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(stateToSave));
+    }
+  }, [
+    currentStep,
+    selectedTemplate,
+    inputMethod,
+    textInput,
+    analysisId,
+    analysisResult,
+    editedFieldValues,
+    reportTitle,
+    customFields,
+  ]);
+
+  // Clear session storage when navigating away after saving
+  const clearSessionStorage = () => {
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
+  };
 
   const handleTemplateSelect = (template: Template) => {
     setSelectedTemplate(template);
@@ -211,6 +306,9 @@ export const AnalyzeCall: React.FC = () => {
         custom_fields: validCustomFields,
       });
 
+      // Clear session storage after successful save
+      clearSessionStorage();
+
       toast.success('Report created successfully!');
       navigate('/reports');
     } catch (error: any) {
@@ -247,6 +345,9 @@ export const AnalyzeCall: React.FC = () => {
         custom_fields: validCustomFields,
       });
 
+      // Clear session storage after successful save
+      clearSessionStorage();
+
       toast.success('Draft saved successfully!');
       navigate('/drafts');
     } catch (error: any) {
@@ -266,6 +367,7 @@ export const AnalyzeCall: React.FC = () => {
     setEditedFieldValues({});
     setReportTitle('');
     setCustomFields([]);
+    clearSessionStorage();
   };
 
   const getActiveStep = () => {

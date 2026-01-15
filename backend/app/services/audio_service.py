@@ -8,7 +8,13 @@ from flask import current_app
 
 
 class AudioService:
-    ALLOWED_EXTENSIONS = {'mp3', 'wav', 'ogg', 'm4a', 'flac', 'webm', 'mp4', 'mpeg'}
+    # Support all common audio formats
+    ALLOWED_EXTENSIONS = {
+        'mp3', 'wav', 'ogg', 'm4a', 'flac', 'webm', 'mp4', 'mpeg',
+        'aac', 'wma', 'aiff', 'aif', 'opus', 'amr', '3gp', '3gpp',
+        'caf', 'ac3', 'spx', 'au', 'gsm', 'mka', 'ra', 'rm',
+        'mid', 'midi', 'oga', 'mogg', 'wv', 'tta', 'voc'
+    }
 
     @staticmethod
     def allowed_file(filename):

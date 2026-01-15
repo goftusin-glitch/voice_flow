@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/common/Layout';
 import { reportsService } from '../services/reportsService';
 import { teamsService, UserTeam } from '../services/teamsService';
@@ -12,7 +11,6 @@ import { ShareModal } from '../components/reports/ShareModal';
 
 export const MyReports: React.FC = () => {
   const toast = useToast();
-  const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -22,6 +20,7 @@ export const MyReports: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'finalized'>('finalized');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [teams, setTeams] = useState<UserTeam[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<UserTeam | null>(null);
@@ -100,8 +99,14 @@ export const MyReports: React.FC = () => {
     }
   };
 
-  const handleEditReport = (reportId: number) => {
-    navigate(`/reports/${reportId}/edit`);
+  const handleEditReport = async (reportId: number) => {
+    try {
+      const fullReport = await reportsService.getReportById(reportId);
+      setSelectedReport(fullReport);
+      setShowEditModal(true);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to load report for editing');
+    }
   };
 
   const handleDownloadPDF = async (reportId: number) => {
@@ -395,6 +400,18 @@ export const MyReports: React.FC = () => {
               setSelectedReport(null);
             }}
             onUpdate={() => loadReports()}
+          />
+        )}
+
+        {showEditModal && selectedReport && (
+          <ReportViewModal
+            report={selectedReport}
+            onClose={() => {
+              setShowEditModal(false);
+              setSelectedReport(null);
+            }}
+            onUpdate={() => loadReports()}
+            startInEditMode={true}
           />
         )}
 

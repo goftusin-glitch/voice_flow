@@ -48,26 +48,43 @@ class TemplateService:
 
     @staticmethod
     def get_all_templates(user_id):
-        """Get all templates for user's team"""
+        """Get all templates for user - own templates + shared templates from team members"""
         team = TemplateService.get_or_create_team(user_id)
 
-        templates = ReportTemplate.query.filter_by(
-            team_id=team.id,
+        # Get user's own templates
+        own_templates = ReportTemplate.query.filter_by(
+            created_by=user_id,
             is_active=True
         ).options(
             joinedload(ReportTemplate.fields)
         ).order_by(desc(ReportTemplate.created_at)).all()
 
+        # Get templates shared by other team members
+        shared_templates = ReportTemplate.query.filter(
+            ReportTemplate.team_id == team.id,
+            ReportTemplate.created_by != user_id,
+            ReportTemplate.shared_with_team == True,
+            ReportTemplate.is_active == True
+        ).options(
+            joinedload(ReportTemplate.fields)
+        ).order_by(desc(ReportTemplate.created_at)).all()
+
+        # Combine and remove duplicates (prioritize own templates)
+        own_ids = {t.id for t in own_templates}
+        all_templates = own_templates + [t for t in shared_templates if t.id not in own_ids]
+
         result = []
-        for template in templates:
+        for template in all_templates:
             template_dict = template.to_dict()
             # Add creator name
             creator = User.query.get(template.created_by)
             if creator:
                 template_dict['created_by_name'] = f"{creator.first_name} {creator.last_name}"
             # Add permission flag - only creator can edit/delete
-            template_dict['can_edit'] = template.created_by == user_id
-            template_dict['is_owner'] = template.created_by == user_id
+            is_owner = template.created_by == user_id
+            template_dict['can_edit'] = is_owner
+            template_dict['is_owner'] = is_owner
+            template_dict['is_shared'] = not is_owner and template.shared_with_team
             result.append(template_dict)
 
         return result
@@ -80,13 +97,25 @@ class TemplateService:
         if not team:
             raise ValueError("User is not part of any team")
 
+        # First check if user owns the template
         template = ReportTemplate.query.filter_by(
             id=template_id,
-            team_id=team.id,
+            created_by=user_id,
             is_active=True
         ).options(
             joinedload(ReportTemplate.fields)
         ).first()
+
+        # If not, check if it's a shared template from the team
+        if not template:
+            template = ReportTemplate.query.filter(
+                ReportTemplate.id == template_id,
+                ReportTemplate.team_id == team.id,
+                ReportTemplate.shared_with_team == True,
+                ReportTemplate.is_active == True
+            ).options(
+                joinedload(ReportTemplate.fields)
+            ).first()
 
         if not template:
             raise ValueError("Template not found")
@@ -99,13 +128,15 @@ class TemplateService:
             template_dict['created_by_name'] = f"{creator.first_name} {creator.last_name}"
 
         # Add permission flag - only creator can edit/delete
-        template_dict['can_edit'] = template.created_by == user_id
-        template_dict['is_owner'] = template.created_by == user_id
+        is_owner = template.created_by == user_id
+        template_dict['can_edit'] = is_owner
+        template_dict['is_owner'] = is_owner
+        template_dict['is_shared'] = not is_owner and template.shared_with_team
 
         return template_dict
 
     @staticmethod
-    def create_template(user_id, name, description, fields):
+    def create_template(user_id, name, description, fields, shared_with_team=False):
         """Create a new template"""
         team = TemplateService.get_or_create_team(user_id)
 
@@ -118,7 +149,8 @@ class TemplateService:
             name=name,
             description=description,
             created_by=user_id,
-            team_id=team.id
+            team_id=team.id,
+            shared_with_team=shared_with_team
         )
         db.session.add(template)
         db.session.flush()  # Get template ID
@@ -145,7 +177,7 @@ class TemplateService:
         return template.to_dict(include_fields=True)
 
     @staticmethod
-    def update_template(template_id, user_id, name=None, description=None, fields=None):
+    def update_template(template_id, user_id, name=None, description=None, fields=None, shared_with_team=None):
         """Update an existing template"""
         team = TemplateService.get_user_team(user_id)
 
@@ -170,6 +202,8 @@ class TemplateService:
             template.name = name
         if description is not None:
             template.description = description
+        if shared_with_team is not None:
+            template.shared_with_team = shared_with_team
 
         # Update fields if provided
         if fields is not None:
@@ -244,3 +278,89 @@ class TemplateService:
                 raise ValueError(f"{field_data['field_type']} field must have options")
 
         return True
+
+    @staticmethod
+    def create_default_template_for_user(user_id, team_id):
+        """Create a default 'Client Data' template for new users"""
+        # Check if user already has a template named 'Client Data'
+        existing = ReportTemplate.query.filter_by(
+            created_by=user_id,
+            name='Client Data',
+            is_active=True
+        ).first()
+
+        if existing:
+            return existing.to_dict(include_fields=True)
+
+        # Define default template fields
+        default_fields = [
+            {
+                'field_name': 'name',
+                'field_label': 'Name',
+                'field_type': 'text',
+                'is_required': True,
+                'display_order': 0
+            },
+            {
+                'field_name': 'company',
+                'field_label': 'Company',
+                'field_type': 'text',
+                'is_required': False,
+                'display_order': 1
+            },
+            {
+                'field_name': 'email',
+                'field_label': 'Email',
+                'field_type': 'text',
+                'is_required': False,
+                'display_order': 2
+            },
+            {
+                'field_name': 'phone',
+                'field_label': 'Phone',
+                'field_type': 'text',
+                'is_required': False,
+                'display_order': 3
+            },
+            {
+                'field_name': 'position_title',
+                'field_label': 'Position/Title',
+                'field_type': 'text',
+                'is_required': False,
+                'display_order': 4
+            },
+            {
+                'field_name': 'notes',
+                'field_label': 'Notes',
+                'field_type': 'long_text',
+                'is_required': False,
+                'display_order': 5
+            }
+        ]
+
+        # Create the default template
+        template = ReportTemplate(
+            name='Client Data',
+            description='Default template for capturing client information from calls',
+            created_by=user_id,
+            team_id=team_id,
+            shared_with_team=False
+        )
+        db.session.add(template)
+        db.session.flush()
+
+        # Create fields
+        for field_data in default_fields:
+            field = TemplateField(
+                template_id=template.id,
+                field_name=field_data['field_name'],
+                field_label=field_data['field_label'],
+                field_type=field_data['field_type'],
+                is_required=field_data['is_required'],
+                display_order=field_data['display_order']
+            )
+            db.session.add(field)
+
+        db.session.commit()
+
+        return template.to_dict(include_fields=True)

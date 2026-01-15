@@ -26,18 +26,22 @@ export interface Template {
   fields?: TemplateField[];
   can_edit?: boolean;
   is_owner?: boolean;
+  shared_with_team?: boolean;
+  is_shared?: boolean;
 }
 
 export interface CreateTemplateRequest {
   name: string;
   description: string;
   fields: TemplateField[];
+  shared_with_team?: boolean;
 }
 
 export interface UpdateTemplateRequest {
   name?: string;
   description?: string;
   fields?: TemplateField[];
+  shared_with_team?: boolean;
 }
 
 export interface TemplatesListResponse {

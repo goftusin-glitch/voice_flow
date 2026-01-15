@@ -5,6 +5,7 @@ from app.models.user import User, RefreshToken
 from app.models.team import Team, TeamMember
 from flask import current_app
 from app.services.google_auth_service import GoogleAuthService
+from app.services.template_service import TemplateService
 
 class AuthService:
     @staticmethod
@@ -64,6 +65,13 @@ class AuthService:
             db.session.add(team_member)
             db.session.commit()
 
+            # Create default template for the user in the invited team
+            try:
+                TemplateService.create_default_template_for_user(user.id, invitation.team_id)
+                print(f"Created default template for user {user.id}")
+            except Exception as e:
+                print(f"Warning: Failed to create default template: {str(e)}")
+
             print(f"User {user.id} registered and joined team {invitation.team_id} via invitation")
         else:
             # Create a default team for the user (only if no invitation)
@@ -82,6 +90,13 @@ class AuthService:
             )
             db.session.add(team_member)
             db.session.commit()
+
+            # Create default template for the user
+            try:
+                TemplateService.create_default_template_for_user(user.id, team.id)
+                print(f"Created default template for user {user.id}")
+            except Exception as e:
+                print(f"Warning: Failed to create default template: {str(e)}")
 
             print(f"User {user.id} created with own team {team.id}")
 
@@ -283,6 +298,13 @@ class AuthService:
                     db.session.add(team_member)
 
                     db.session.commit()
+
+                    # Create default template for the user
+                    try:
+                        TemplateService.create_default_template_for_user(user.id, team.id)
+                        print(f"Created default template for Google user {user.id}")
+                    except Exception as e:
+                        print(f"Warning: Failed to create default template for Google user: {str(e)}")
 
             # Check if user is active
             if not user.is_active:

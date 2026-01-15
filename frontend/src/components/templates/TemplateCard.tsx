@@ -1,5 +1,5 @@
 import React from 'react';
-import { Edit, Trash2, FileText, Calendar, User, ArrowRight } from 'lucide-react';
+import { Edit, Trash2, FileText, Calendar, User, ArrowRight, Users, Share2 } from 'lucide-react';
 import { Card, CardContent, Box, Typography, IconButton, Chip } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Template } from '../../types/template';
@@ -49,12 +49,46 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, on
                 <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }} noWrap>
                   {template.name}
                 </Typography>
-                <Chip
-                  label={`${template.field_count} ${template.field_count === 1 ? 'field' : 'fields'}`}
-                  size="small"
-                  color="primary"
-                  sx={{ height: 20, fontSize: '0.7rem', fontWeight: 500 }}
-                />
+                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                  <Chip
+                    label={`${template.field_count} ${template.field_count === 1 ? 'field' : 'fields'}`}
+                    size="small"
+                    color="primary"
+                    sx={{ height: 20, fontSize: '0.7rem', fontWeight: 500 }}
+                  />
+                  {/* Show "Shared" badge for templates shared by team members */}
+                  {template.is_shared && (
+                    <Chip
+                      icon={<Users className="w-3 h-3" />}
+                      label="Shared"
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.7rem',
+                        fontWeight: 500,
+                        bgcolor: 'success.100',
+                        color: 'success.800',
+                        '& .MuiChip-icon': { color: 'success.600', ml: 0.5 }
+                      }}
+                    />
+                  )}
+                  {/* Show "Sharing" badge for own templates shared with team */}
+                  {template.is_owner && template.shared_with_team && (
+                    <Chip
+                      icon={<Share2 className="w-3 h-3" />}
+                      label="Sharing"
+                      size="small"
+                      sx={{
+                        height: 20,
+                        fontSize: '0.7rem',
+                        fontWeight: 500,
+                        bgcolor: 'info.100',
+                        color: 'info.800',
+                        '& .MuiChip-icon': { color: 'info.600', ml: 0.5 }
+                      }}
+                    />
+                  )}
+                </Box>
               </Box>
             </Box>
 

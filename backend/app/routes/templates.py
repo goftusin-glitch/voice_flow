@@ -87,7 +87,8 @@ def create_template(current_user):
             user_id=current_user.id,
             name=data['name'],
             description=data.get('description', ''),
-            fields=data['fields']
+            fields=data['fields'],
+            shared_with_team=data.get('shared_with_team', False)
         )
 
         return jsonify({
@@ -140,7 +141,8 @@ def update_template(current_user, template_id):
             user_id=current_user.id,
             name=data.get('name'),
             description=data.get('description'),
-            fields=data.get('fields')
+            fields=data.get('fields'),
+            shared_with_team=data.get('shared_with_team')
         )
 
         return jsonify({

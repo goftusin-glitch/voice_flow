@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from '../components/common/Layout';
 import { reportsService } from '../services/reportsService';
 import { Report } from '../types/report';
-import { Search, Eye, Edit, Trash2, ChevronLeft, ChevronRight, FileText, Calendar, User, CheckCircle } from 'lucide-react';
-import { Container, Card, CardContent, Box, Typography, TextField, InputAdornment, IconButton, CircularProgress, Fade, Grow, Pagination } from '@mui/material';
-import { motion } from 'framer-motion';
+import { Search, FileText, Filter, CheckCircle2 } from 'lucide-react';
 import { useToast } from '../components/common/CustomToast';
 import { ReportViewModal } from '../components/reports/ReportViewModal';
 import { ConfirmDialog } from '../components/common/ConfirmDialog';
 import { DraftEditModal } from '../components/drafts/DraftEditModal';
 import { useNavigate } from 'react-router-dom';
+import { DraftsTable } from '../components/dashboard/DraftsTable';
 
 export const Drafts: React.FC = () => {
   const toast = useToast();
@@ -119,223 +118,190 @@ export const Drafts: React.FC = () => {
     });
   };
 
+  // Convert drafts to format expected by DraftsTable
+  const tableDrafts = drafts.map((draft) => ({
+    id: draft.id,
+    title: draft.title,
+    template_name: draft.template_name || draft.template?.name || 'Unknown',
+    created_by_name:
+      typeof draft.created_by === 'string'
+        ? draft.created_by
+        : draft.created_by?.name || 'Unknown',
+    created_at: draft.created_at,
+    updated_at: draft.updated_at,
+    summary: draft.summary,
+    field_values: draft.field_values?.map((fv) => ({
+      field_id: fv.field_id,
+      field_label: fv.field_label,
+      field_type: fv.field_type,
+      field_name: fv.field_name || '',
+      value: fv.value as string | null,
+    })),
+  }));
+
+  const handleBatchDelete = async (draftIds: number[]) => {
+    try {
+      await reportsService.batchDeleteReports(draftIds);
+      toast.success(`${draftIds.length} draft(s) deleted successfully`);
+      loadDrafts();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete drafts');
+    }
+  };
+
+  const handleBatchFinalize = async (draftIds: number[]) => {
+    try {
+      for (const id of draftIds) {
+        await reportsService.finalizeDraft(id);
+      }
+      toast.success(`${draftIds.length} draft(s) finalized successfully`);
+      loadDrafts();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to finalize drafts');
+    }
+  };
+
   return (
     <Layout>
-      <Container maxWidth="xl" sx={{ py: 4 }}>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
         {/* Header */}
-        <Fade in timeout={500}>
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 700,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                mb: 1,
-              }}
-            >
-              My Drafts
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage your saved draft reports
-            </Typography>
-          </Box>
-        </Fade>
+        <div className="mb-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+              <FileText className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">My Drafts</h1>
+              <p className="text-gray-600 mt-1">Manage your saved draft reports</p>
+            </div>
+          </div>
+        </div>
 
-        {/* Search Bar */}
-        <Grow in timeout={700}>
-          <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <CardContent>
-              <TextField
-                fullWidth
-                placeholder="Search drafts by title..."
-                value={search}
-                onChange={handleSearchChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search size={20} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                  },
-                }}
-              />
-            </CardContent>
-          </Card>
-        </Grow>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Total Drafts</p>
+                <p className="text-2xl font-bold text-gray-900">{total}</p>
+              </div>
+              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <FileText className="w-6 h-6 text-yellow-600" />
+              </div>
+            </div>
+          </div>
 
-        {/* Results Header */}
-        {!loading && (
-          <Fade in timeout={900}>
-            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
-                Showing {drafts.length} of {total} drafts
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Page {page} of {totalPages}
-              </Typography>
-            </Box>
-          </Fade>
-        )}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Ready to Finalize</p>
+                <p className="text-2xl font-bold text-green-600">{drafts.length}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </div>
 
-        {/* Drafts List */}
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-            <CircularProgress />
-          </Box>
-        ) : drafts.length === 0 ? (
-          <Fade in timeout={1000}>
-            <Card sx={{ borderRadius: 2, textAlign: 'center', py: 8 }}>
-              <CardContent>
-                <FileText size={64} style={{ opacity: 0.3, margin: '0 auto 16px' }} />
-                <Typography variant="h6" color="text.secondary" gutterBottom>
-                  No drafts found
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {search ? 'Try adjusting your search query' : 'Start analyzing calls to create drafts'}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Fade>
-        ) : (
-          <Box sx={{ display: 'grid', gap: 2 }}>
-            {drafts.map((draft, index) => (
-              <motion.div
-                key={draft.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card
-                  sx={{
-                    borderRadius: 2,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-                      transform: 'translateY(-2px)',
-                    },
-                  }}
-                >
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-                          {draft.title}
-                        </Typography>
+          <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Current Page</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {page} / {totalPages}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Filter className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </div>
+        </div>
 
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <FileText size={16} style={{ opacity: 0.6 }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {draft.template_name || 'Unknown Template'}
-                            </Typography>
-                          </Box>
+        {/* Search */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={handleSearchChange}
+              placeholder="Search drafts..."
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            />
+          </div>
+        </div>
 
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <User size={16} style={{ opacity: 0.6 }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {typeof draft.created_by === 'string'
-                                ? draft.created_by
-                                : draft.created_by?.name || 'Unknown'}
-                            </Typography>
-                          </Box>
-
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Calendar size={16} style={{ opacity: 0.6 }} />
-                            <Typography variant="body2" color="text.secondary">
-                              {formatDate(draft.created_at)}
-                            </Typography>
-                          </Box>
-                        </Box>
-
-                        {draft.summary && (
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            {draft.summary.substring(0, 150)}
-                            {draft.summary.length > 150 ? '...' : ''}
-                          </Typography>
-                        )}
-                      </Box>
-
-                      <Box sx={{ display: 'flex', gap: 1, ml: 2 }}>
-                        <IconButton
-                          onClick={() => handleView(draft)}
-                          size="small"
-                          sx={{
-                            color: 'primary.main',
-                            '&:hover': { bgcolor: 'primary.light', color: 'primary.contrastText' },
-                          }}
-                          title="View draft"
-                        >
-                          <Eye size={20} />
-                        </IconButton>
-
-                        <IconButton
-                          onClick={() => handleEdit(draft)}
-                          size="small"
-                          sx={{
-                            color: 'info.main',
-                            '&:hover': { bgcolor: 'info.light', color: 'info.contrastText' },
-                          }}
-                          title="Edit draft"
-                        >
-                          <Edit size={20} />
-                        </IconButton>
-
-                        <IconButton
-                          onClick={() => handleFinalizeClick(draft.id)}
-                          size="small"
-                          sx={{
-                            color: 'success.main',
-                            '&:hover': { bgcolor: 'success.light', color: 'success.contrastText' },
-                          }}
-                          title="Finalize draft"
-                        >
-                          <CheckCircle size={20} />
-                        </IconButton>
-
-                        <IconButton
-                          onClick={() => handleDeleteClick(draft.id)}
-                          size="small"
-                          sx={{
-                            color: 'error.main',
-                            '&:hover': { bgcolor: 'error.light', color: 'error.contrastText' },
-                          }}
-                          title="Delete draft"
-                        >
-                          <Trash2 size={20} />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </Box>
-        )}
+        {/* Drafts Table */}
+        <DraftsTable
+          drafts={tableDrafts}
+          onEdit={(draftId) => {
+            const draft = drafts.find((d) => d.id === draftId);
+            if (draft) handleEdit(draft);
+          }}
+          onDelete={handleDeleteClick}
+          onFinalize={handleFinalizeClick}
+          onBatchDelete={handleBatchDelete}
+          onBatchFinalize={handleBatchFinalize}
+          loading={loading}
+        />
 
         {/* Pagination */}
-        {!loading && totalPages > 1 && (
-          <Fade in timeout={1200}>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(e, value) => setPage(value)}
-                color="primary"
-                size="large"
-                showFirstButton
-                showLastButton
-              />
-            </Box>
-          </Fade>
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Showing {drafts.length} of {total} drafts
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {[...Array(totalPages)].map((_, index) => {
+                  const pageNum = index + 1;
+                  if (
+                    pageNum === 1 ||
+                    pageNum === totalPages ||
+                    Math.abs(pageNum - page) <= 1
+                  ) {
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setPage(pageNum)}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          page === pageNum
+                            ? 'bg-purple-600 text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  } else if (Math.abs(pageNum - page) === 2) {
+                    return (
+                      <span key={pageNum} className="px-2 text-gray-400">
+                        ...
+                      </span>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page === totalPages}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         )}
-      </Container>
+      </div>
 
       {/* View Modal */}
       {selectedReport && showViewModal && (
