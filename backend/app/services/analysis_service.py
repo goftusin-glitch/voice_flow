@@ -1,5 +1,6 @@
 from openai import OpenAI
 from flask import current_app
+from datetime import datetime
 import json
 from app.models.template import ReportTemplate, TemplateField
 from app.models.analysis import CallAnalysis
