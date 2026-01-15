@@ -644,23 +644,34 @@ Provide the extracted information as a structured text that can be analyzed."""
         # Generate title
         title = f"Report from text - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
 
-        # Extract field values
+        # Extract field values with full field info
         field_values = []
+        field_values_for_response = []
         for field in template.fields:
             value = analysis_result.get('field_values', {}).get(field.field_name)
-            if value:
-                field_values.append({
-                    'field_id': field.id,
-                    'value': value
-                })
+            field_values.append({
+                'field_id': field.id,
+                'value': value if value else ''
+            })
+            field_values_for_response.append({
+                'field_id': field.id,
+                'field_name': field.field_name,
+                'field_label': field.field_label,
+                'field_type': field.field_type,
+                'field_options': field.field_options,
+                'is_required': field.is_required,
+                'display_order': field.display_order,
+                'value': value if value else ''
+            })
 
         # Create draft report
+        summary = analysis_result.get('summary', '')
         draft = ReportService.create_draft_report(
             analysis_id=analysis.id,
             user_id=user_id,
             team_id=team_id,
             title=title,
-            summary=analysis_result.get('summary'),
+            summary=summary,
             field_values=field_values,
             custom_fields=[]
         )
@@ -670,6 +681,9 @@ Provide the extracted information as a structured text that can be analyzed."""
         return {
             'id': draft.id,
             'title': draft.title,
+            'summary': summary,
+            'template_name': template.name,
+            'field_values': field_values_for_response,
             'created_at': draft.created_at.isoformat() if draft.created_at else None
         }
 
@@ -727,23 +741,34 @@ Provide the extracted information as a structured text that can be analyzed."""
         # Generate title
         title = f"Report from audio - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
 
-        # Extract field values
+        # Extract field values with full field info
         field_values = []
+        field_values_for_response = []
         for field in template.fields:
             value = analysis_result.get('field_values', {}).get(field.field_name)
-            if value:
-                field_values.append({
-                    'field_id': field.id,
-                    'value': value
-                })
+            field_values.append({
+                'field_id': field.id,
+                'value': value if value else ''
+            })
+            field_values_for_response.append({
+                'field_id': field.id,
+                'field_name': field.field_name,
+                'field_label': field.field_label,
+                'field_type': field.field_type,
+                'field_options': field.field_options,
+                'is_required': field.is_required,
+                'display_order': field.display_order,
+                'value': value if value else ''
+            })
 
         # Create draft report
+        summary = analysis_result.get('summary', '')
         draft = ReportService.create_draft_report(
             analysis_id=analysis.id,
             user_id=user_id,
             team_id=team_id,
             title=title,
-            summary=analysis_result.get('summary'),
+            summary=summary,
             field_values=field_values,
             custom_fields=[]
         )
@@ -753,6 +778,9 @@ Provide the extracted information as a structured text that can be analyzed."""
         return {
             'id': draft.id,
             'title': draft.title,
+            'summary': summary,
+            'template_name': template.name,
+            'field_values': field_values_for_response,
             'created_at': draft.created_at.isoformat() if draft.created_at else None
         }
 
@@ -800,23 +828,34 @@ Provide the extracted information as a structured text that can be analyzed."""
         # Generate title
         title = f"Report from image - {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
 
-        # Extract field values
+        # Extract field values with full field info
         field_values = []
+        field_values_for_response = []
         for field in template.fields:
             value = analysis_result.get('field_values', {}).get(field.field_name)
-            if value:
-                field_values.append({
-                    'field_id': field.id,
-                    'value': value
-                })
+            field_values.append({
+                'field_id': field.id,
+                'value': value if value else ''
+            })
+            field_values_for_response.append({
+                'field_id': field.id,
+                'field_name': field.field_name,
+                'field_label': field.field_label,
+                'field_type': field.field_type,
+                'field_options': field.field_options,
+                'is_required': field.is_required,
+                'display_order': field.display_order,
+                'value': value if value else ''
+            })
 
         # Create draft report
+        summary = analysis_result.get('summary', '')
         draft = ReportService.create_draft_report(
             analysis_id=analysis.id,
             user_id=user_id,
             team_id=team_id,
             title=title,
-            summary=analysis_result.get('summary'),
+            summary=summary,
             field_values=field_values,
             custom_fields=[]
         )
@@ -826,5 +865,8 @@ Provide the extracted information as a structured text that can be analyzed."""
         return {
             'id': draft.id,
             'title': draft.title,
+            'summary': summary,
+            'template_name': template.name,
+            'field_values': field_values_for_response,
             'created_at': draft.created_at.isoformat() if draft.created_at else None
         }

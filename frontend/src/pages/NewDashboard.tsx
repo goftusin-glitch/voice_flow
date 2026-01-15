@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../components/common/Layout';
 import { MultiInputComponent } from '../components/dashboard/MultiInputComponent';
 import { DraftsTable } from '../components/dashboard/DraftsTable';
+import { InlineDraftEditor } from '../components/dashboard/InlineDraftEditor';
 import { AlertCircle, Plus, Search, ChevronDown } from 'lucide-react';
 import { useToast } from '../components/common/CustomToast';
 import { useAuth } from '../context/AuthContext';
 import { templatesService } from '../services/templatesService';
-import { unifiedDashboardService } from '../services/unifiedDashboardService';
+import { unifiedDashboardService, CreateReportResponse, FieldValue } from '../services/unifiedDashboardService';
 import { reportsService } from '../services/reportsService';
 import { dashboardService } from '../services/dashboardService';
 
@@ -46,6 +47,9 @@ export const NewDashboard: React.FC = () => {
     drafts: 0,
     finalized: 0,
   });
+
+  // State for inline draft editing
+  const [currentDraft, setCurrentDraft] = useState<CreateReportResponse | null>(null);
 
   useEffect(() => {
     loadTemplates();
@@ -110,11 +114,11 @@ export const NewDashboard: React.FC = () => {
       toast.success('Report created successfully!');
       setTextInput('');
 
+      // Show inline draft editor instead of navigating
+      setCurrentDraft(result);
+
       // Reload drafts and metrics
       await Promise.all([loadDrafts(), loadMetrics()]);
-
-      // Navigate to edit the draft
-      navigate(`/drafts?edit=${result.draft_id}`);
     } catch (error: any) {
       console.error('Failed to create report:', error);
       toast.error(error.response?.data?.message || 'Failed to create report');
@@ -140,11 +144,11 @@ export const NewDashboard: React.FC = () => {
 
       toast.success('Report created from audio!');
 
+      // Show inline draft editor instead of navigating
+      setCurrentDraft(result);
+
       // Reload drafts and metrics
       await Promise.all([loadDrafts(), loadMetrics()]);
-
-      // Navigate to edit the draft
-      navigate(`/drafts?edit=${result.draft_id}`);
     } catch (error: any) {
       console.error('Failed to create report from audio:', error);
       toast.error(error.response?.data?.message || 'Failed to process audio');
@@ -170,11 +174,11 @@ export const NewDashboard: React.FC = () => {
 
       toast.success('Report created from image!');
 
+      // Show inline draft editor instead of navigating
+      setCurrentDraft(result);
+
       // Reload drafts and metrics
       await Promise.all([loadDrafts(), loadMetrics()]);
-
-      // Navigate to edit the draft
-      navigate(`/drafts?edit=${result.draft_id}`);
     } catch (error: any) {
       console.error('Failed to create report from image:', error);
       toast.error(error.response?.data?.message || 'Failed to process image');
@@ -185,6 +189,56 @@ export const NewDashboard: React.FC = () => {
 
   const handleEditDraft = (draftId: number) => {
     navigate(`/drafts?edit=${draftId}`);
+  };
+
+  // Inline draft editor handlers
+  const handleInlineSaveDraft = async (draftId: number, fieldValues: FieldValue[], summary: string) => {
+    try {
+      await reportsService.updateReport(draftId, {
+        summary,
+        field_values: fieldValues.map((f) => ({
+          field_id: f.field_id,
+          value: f.value,
+        })),
+      });
+      toast.success('Draft saved successfully!');
+      await Promise.all([loadDrafts(), loadMetrics()]);
+    } catch (error: any) {
+      console.error('Failed to save draft:', error);
+      toast.error('Failed to save draft');
+      throw error;
+    }
+  };
+
+  const handleInlineFinalize = async (draftId: number, fieldValues: FieldValue[], summary: string) => {
+    try {
+      // First save the changes
+      await reportsService.updateReport(draftId, {
+        summary,
+        field_values: fieldValues.map((f) => ({
+          field_id: f.field_id,
+          value: f.value,
+        })),
+      });
+
+      // Then finalize
+      await reportsService.finalizeDraft(draftId);
+      toast.success('Report finalized successfully!');
+
+      // Clear the current draft
+      setCurrentDraft(null);
+
+      // Reload drafts and metrics
+      await Promise.all([loadDrafts(), loadMetrics()]);
+    } catch (error: any) {
+      console.error('Failed to finalize report:', error);
+      toast.error('Failed to finalize report');
+      throw error;
+    }
+  };
+
+  const handleCancelInlineEdit = () => {
+    setCurrentDraft(null);
   };
 
   const handleDeleteDraft = async (draftId: number) => {
@@ -315,6 +369,23 @@ export const NewDashboard: React.FC = () => {
             >
               {loading ? 'Creating Report...' : 'Create Report'}
             </button>
+          </div>
+        )}
+
+        {/* Inline Draft Editor - Shows after report generation */}
+        {currentDraft && (
+          <div className="mb-6">
+            <InlineDraftEditor
+              draftId={currentDraft.draft_id}
+              title={currentDraft.title}
+              summary={currentDraft.summary}
+              templateName={currentDraft.template_name}
+              fieldValues={currentDraft.field_values}
+              onSaveDraft={handleInlineSaveDraft}
+              onFinalize={handleInlineFinalize}
+              onCancel={handleCancelInlineEdit}
+              loading={loading}
+            />
           </div>
         )}
 

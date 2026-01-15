@@ -126,6 +126,7 @@ def update_report(current_user, report_id):
             user_id=current_user.id,
             team_id=team_id,
             title=data.get('title'),
+            summary=data.get('summary'),
             field_values=data.get('field_values'),
             custom_fields=data.get('custom_fields')
         )
@@ -641,6 +642,9 @@ def create_from_input(current_user):
                     'data': {
                         'draft_id': draft['id'],
                         'title': draft['title'],
+                        'summary': draft.get('summary', ''),
+                        'template_name': draft.get('template_name', ''),
+                        'field_values': draft.get('field_values', []),
                         'created_at': draft['created_at']
                     }
                 }), 201
@@ -676,6 +680,9 @@ def create_from_input(current_user):
                 'data': {
                     'draft_id': draft['id'],
                     'title': draft['title'],
+                    'summary': draft.get('summary', ''),
+                    'template_name': draft.get('template_name', ''),
+                    'field_values': draft.get('field_values', []),
                     'created_at': draft['created_at']
                 }
             }), 201

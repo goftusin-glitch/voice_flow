@@ -11,9 +11,23 @@ export interface CreateReportFromFileRequest {
   file: File;
 }
 
+export interface FieldValue {
+  field_id: number;
+  field_name: string;
+  field_label: string;
+  field_type: string;
+  field_options?: string[];
+  is_required: boolean;
+  display_order: number;
+  value: string | number;
+}
+
 export interface CreateReportResponse {
   draft_id: number;
   title: string;
+  summary: string;
+  template_name: string;
+  field_values: FieldValue[];
   created_at: string;
 }
 

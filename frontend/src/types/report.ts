@@ -1,7 +1,8 @@
 export interface ReportFieldValue {
-  field_id: number;
+  field_id: number | null;
   field_label: string;
-  field_type: 'text' | 'number' | 'long_text' | 'dropdown' | 'multi_select';
+  field_type: 'text' | 'number' | 'long_text' | 'dropdown' | 'multi_select' | string;
+  field_name?: string;
   value: string | number;
 }
 
@@ -54,6 +55,7 @@ export interface ReportsListResponse {
 
 export interface UpdateReportRequest {
   title?: string;
+  summary?: string;
   field_values?: Array<{
     field_id: number;
     value: string | number;

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FileText, Eye, Download, Mail, MessageCircle, Trash2, Clock, User, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
-import { Report } from '../../types/report';
+import { Report, ReportFieldValue } from '../../types/report';
 
 interface ReportsTableProps {
   reports: Report[];
@@ -48,6 +48,30 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
     } else {
       setSelectedReports(reports.map((r) => r.id));
     }
+  };
+
+  // Get unique field labels from all reports to create dynamic columns
+  const fieldColumns = useMemo(() => {
+    const fieldMap = new Map<string, string>();
+    reports.forEach((report) => {
+      if (report.field_values) {
+        report.field_values.forEach((fv) => {
+          if (!fieldMap.has(fv.field_label)) {
+            fieldMap.set(fv.field_label, fv.field_label);
+          }
+        });
+      }
+    });
+    return Array.from(fieldMap.keys()).slice(0, 5); // Limit to 5 columns
+  }, [reports]);
+
+  // Helper to get field value for a report
+  const getFieldValue = (report: Report, fieldLabel: string): string => {
+    if (!report.field_values) return '-';
+    const field = report.field_values.find((fv) => fv.field_label === fieldLabel);
+    if (!field || field.value === null || field.value === undefined || field.value === '') return '-';
+    const value = String(field.value);
+    return value.length > 30 ? value.substring(0, 30) + '...' : value;
   };
 
   if (loading) {
@@ -107,7 +131,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left">
+              <th className="px-4 py-3 text-left">
                 <input
                   type="checkbox"
                   checked={selectedReports.length === reports.length && reports.length > 0}
@@ -115,25 +139,22 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                   className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Title
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Report Period
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Template
+              {/* Dynamic field columns */}
+              {fieldColumns.map((fieldLabel) => (
+                <th
+                  key={fieldLabel}
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  {fieldLabel}
+                </th>
+              ))}
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Summary
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created By
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Created
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Finalized
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -146,7 +167,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                   selectedReports.includes(report.id) ? 'bg-purple-50' : ''
                 }`}
               >
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-4 py-4 whitespace-nowrap">
                   <input
                     type="checkbox"
                     checked={selectedReports.includes(report.id)}
@@ -154,63 +175,32 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                     className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                   />
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-green-600" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">
-                        {report.title}
-                      </div>
-                      {report.summary && (
-                        <div className="text-xs text-gray-500 truncate mt-1 max-w-md">
-                          {report.summary}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                    {report.template_name || report.template?.name || 'N/A'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-900">
-                      {typeof report.created_by === 'string'
-                        ? report.created_by
-                        : report.created_by?.name || 'Unknown'}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm text-gray-600">{formatDate(report.created_at)}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                {/* Report Period (date) */}
+                <td className="px-4 py-4 whitespace-nowrap">
                   <span className="text-sm text-gray-600">
-                    {report.finalized_at ? formatDate(report.finalized_at) : 'N/A'}
+                    {formatDate(report.created_at).split(' ')[0]}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      report.status === 'finalized'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}
-                  >
-                    {report.status}
+                {/* Dynamic field value columns */}
+                {fieldColumns.map((fieldLabel) => (
+                  <td key={fieldLabel} className="px-4 py-4">
+                    <span className="text-sm text-gray-900">
+                      {getFieldValue(report, fieldLabel)}
+                    </span>
+                  </td>
+                ))}
+                {/* Summary */}
+                <td className="px-4 py-4">
+                  <span className="text-sm text-gray-600 line-clamp-2">
+                    {report.summary
+                      ? report.summary.length > 80
+                        ? report.summary.substring(0, 80) + '...'
+                        : report.summary
+                      : '-'}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                {/* Actions */}
+                <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex items-center justify-end gap-1">
                     <button
                       onClick={() => onView(report.id)}
@@ -218,36 +208,6 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                       title="View report"
                     >
                       <Eye className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDownloadPDF(report.id)}
-                      className="text-purple-600 hover:text-purple-900 p-2 hover:bg-purple-50 rounded transition-colors"
-                      title="Download PDF"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
-                    {onDownloadExcel && (
-                      <button
-                        onClick={() => onDownloadExcel(report.id)}
-                        className="text-green-600 hover:text-green-900 p-2 hover:bg-green-50 rounded transition-colors"
-                        title="Download Excel"
-                      >
-                        <FileSpreadsheet className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => onShareEmail(report)}
-                      className="text-indigo-600 hover:text-indigo-900 p-2 hover:bg-indigo-50 rounded transition-colors"
-                      title="Share via email"
-                    >
-                      <Mail className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onShareWhatsApp(report.id)}
-                      className="text-teal-600 hover:text-teal-900 p-2 hover:bg-teal-50 rounded transition-colors"
-                      title="Share via WhatsApp"
-                    >
-                      <MessageCircle className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => onDelete(report.id)}
