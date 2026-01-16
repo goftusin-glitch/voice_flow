@@ -1,143 +1,75 @@
 import React from 'react';
-import { Edit, Trash2, FileText, Calendar, User, ArrowRight, Users, Share2 } from 'lucide-react';
+import { GripVertical, Edit, Trash2, Eye } from 'lucide-react';
 import { Card, CardContent, Box, Typography, IconButton, Chip } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Template } from '../../types/template';
-import { format } from 'date-fns';
+import { Template, TemplateField } from '../../types/template';
 
 interface TemplateCardProps {
   template: Template;
   onEdit: (template: Template) => void;
   onDelete: (templateId: number) => void;
+  onView?: (template: Template) => void;
 }
 
-export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete }) => {
+// Map field types to display labels
+const getFieldTypeLabel = (fieldType: string): string => {
+  const typeMap: Record<string, string> = {
+    'text': 'text',
+    'number': 'number',
+    'long_text': 'text',
+    'dropdown': 'select',
+    'multi_select': 'multi',
+    'email': 'email',
+    'date': 'date',
+    'phone': 'phone',
+  };
+  return typeMap[fieldType] || fieldType;
+};
+
+export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, onDelete, onView }) => {
+  const fields = template.fields || [];
+  const displayFields = fields.slice(0, 3);
+  const remainingFieldsCount = fields.length - 3;
+
+  const handleCardClick = () => {
+    if (template.can_edit) {
+      onEdit(template);
+    } else if (onView) {
+      onView(template);
+    }
+  };
+
   return (
     <motion.div
-      whileHover={{ y: -4, scale: 1.02 }}
+      whileHover={{ y: -2 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
     >
       <Card
-        elevation={2}
+        elevation={1}
         sx={{
           height: '100%',
           borderRadius: 3,
           overflow: 'hidden',
+          border: '1px solid',
+          borderColor: 'grey.200',
           '&:hover': {
-            boxShadow: 6,
+            boxShadow: 3,
+            borderColor: 'grey.300',
           },
-          transition: 'box-shadow 0.3s ease-in-out',
+          transition: 'all 0.2s ease-in-out',
+          cursor: 'pointer',
         }}
+        onClick={handleCardClick}
       >
         <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-          {/* Header */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
-              <Box
-                sx={{
-                  p: 1.5,
-                  bgcolor: 'primary.50',
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <FileText className="w-6 h-6 text-blue-600" />
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="h6" fontWeight={600} sx={{ mb: 0.5 }} noWrap>
-                  {template.name}
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                  <Chip
-                    label={`${template.field_count} ${template.field_count === 1 ? 'field' : 'fields'}`}
-                    size="small"
-                    color="primary"
-                    sx={{ height: 20, fontSize: '0.7rem', fontWeight: 500 }}
-                  />
-                  {/* Show "Shared" badge for templates shared by team members */}
-                  {template.is_shared && (
-                    <Chip
-                      icon={<Users className="w-3 h-3" />}
-                      label="Shared"
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: '0.7rem',
-                        fontWeight: 500,
-                        bgcolor: 'success.100',
-                        color: 'success.800',
-                        '& .MuiChip-icon': { color: 'success.600', ml: 0.5 }
-                      }}
-                    />
-                  )}
-                  {/* Show "Sharing" badge for own templates shared with team */}
-                  {template.is_owner && template.shared_with_team && (
-                    <Chip
-                      icon={<Share2 className="w-3 h-3" />}
-                      label="Sharing"
-                      size="small"
-                      sx={{
-                        height: 20,
-                        fontSize: '0.7rem',
-                        fontWeight: 500,
-                        bgcolor: 'info.100',
-                        color: 'info.800',
-                        '& .MuiChip-icon': { color: 'info.600', ml: 0.5 }
-                      }}
-                    />
-                  )}
-                </Box>
-              </Box>
-            </Box>
-
-            {/* Action Buttons - Only show if user can edit */}
-            {template.can_edit && (
-              <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <IconButton
-                    onClick={() => onEdit(template)}
-                    size="small"
-                    color="primary"
-                    title="Edit template"
-                    sx={{
-                      bgcolor: 'primary.50',
-                      '&:hover': { bgcolor: 'primary.100' },
-                    }}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </IconButton>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                  <IconButton
-                    onClick={() => onDelete(template.id)}
-                    size="small"
-                    color="error"
-                    title="Delete template"
-                    sx={{
-                      bgcolor: 'error.50',
-                      '&:hover': { bgcolor: 'error.100' },
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </IconButton>
-                </motion.div>
-              </Box>
-            )}
-            {!template.can_edit && (
-              <Chip
-                label="View Only"
-                size="small"
-                sx={{
-                  ml: 1,
-                  bgcolor: 'grey.200',
-                  color: 'text.secondary',
-                  fontSize: '0.7rem',
-                  height: 24,
-                }}
-              />
-            )}
+          {/* Header - Name and Field Count */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="h6" fontWeight={600} color="text.primary" sx={{ flex: 1 }}>
+              {template.name}
+            </Typography>
+            <Typography variant="body2" color="primary.main" fontWeight={500} sx={{ ml: 2, whiteSpace: 'nowrap' }}>
+              {template.field_count} {template.field_count === 1 ? 'field' : 'fields'}
+            </Typography>
           </Box>
 
           {/* Description */}
@@ -151,58 +83,178 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onEdit, on
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
                 overflow: 'hidden',
-                flex: 1,
+                lineHeight: 1.5,
               }}
             >
               {template.description}
             </Typography>
           )}
 
-          {/* Footer */}
-          <Box
-            sx={{
-              pt: 2,
-              borderTop: '1px solid',
-              borderColor: 'divider',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mt: 'auto',
-            }}
-          >
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <User className="w-3.5 h-3.5 text-gray-400" />
-                <Typography variant="caption" color="text.secondary">
-                  {template.created_by_name || 'Unknown'}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                <Typography variant="caption" color="text.secondary">
-                  {format(new Date(template.created_at), 'MMM d, yyyy')}
-                </Typography>
-              </Box>
-            </Box>
-
-            <motion.div whileHover={{ x: 4 }}>
+          {/* Fields Preview */}
+          <Box sx={{ flex: 1, mb: 2 }}>
+            {displayFields.map((field: TemplateField, index: number) => (
               <Box
-                onClick={() => onEdit(template)}
+                key={field.id || index}
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 0.5,
-                  color: 'primary.main',
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  fontSize: '0.875rem',
-                  '&:hover': { color: 'primary.dark' },
+                  gap: 1.5,
+                  py: 1,
+                  borderBottom: index < displayFields.length - 1 ? '1px solid' : 'none',
+                  borderColor: 'grey.100',
                 }}
+                onClick={(e) => e.stopPropagation()}
               >
-                {template.can_edit ? 'Edit' : 'View'}
-                <ArrowRight className="w-4 h-4" />
+                {/* Drag Handle Icon */}
+                <GripVertical className="w-4 h-4 text-gray-300" />
+
+                {/* Field Label */}
+                <Typography
+                  variant="body2"
+                  fontWeight={500}
+                  color="text.primary"
+                  sx={{ flex: 1, minWidth: 0 }}
+                  noWrap
+                >
+                  {field.field_label}
+                </Typography>
+
+                {/* Field Type Badge */}
+                <Chip
+                  label={getFieldTypeLabel(field.field_type)}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    height: 24,
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    borderColor: 'grey.300',
+                    color: 'text.secondary',
+                    borderRadius: 1.5,
+                  }}
+                />
+
+                {/* Summary Badge */}
+                <Chip
+                  label="Summary"
+                  size="small"
+                  sx={{
+                    height: 24,
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    bgcolor: 'primary.50',
+                    color: 'primary.700',
+                    borderRadius: 1.5,
+                  }}
+                />
               </Box>
-            </motion.div>
+            ))}
+
+            {/* More Fields Indicator */}
+            {remainingFieldsCount > 0 && (
+              <Typography
+                variant="body2"
+                color="primary.main"
+                sx={{ mt: 1, fontWeight: 500 }}
+              >
+                +{remainingFieldsCount} more {remainingFieldsCount === 1 ? 'field' : 'fields'}
+              </Typography>
+            )}
+          </Box>
+
+          {/* Footer - Actions and Type Badge */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              pt: 2,
+              borderTop: '1px solid',
+              borderColor: 'grey.100',
+              mt: 'auto',
+            }}
+          >
+            {/* Action Buttons */}
+            <Box sx={{ display: 'flex', gap: 1 }} onClick={(e) => e.stopPropagation()}>
+              {template.can_edit ? (
+                <>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <IconButton
+                      onClick={() => onEdit(template)}
+                      size="small"
+                      color="primary"
+                      title="Edit template"
+                      sx={{
+                        bgcolor: 'primary.50',
+                        '&:hover': { bgcolor: 'primary.100' },
+                      }}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </IconButton>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <IconButton
+                      onClick={() => onDelete(template.id)}
+                      size="small"
+                      color="error"
+                      title="Delete template"
+                      sx={{
+                        bgcolor: 'error.50',
+                        '&:hover': { bgcolor: 'error.100' },
+                      }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </IconButton>
+                  </motion.div>
+                </>
+              ) : (
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                  <IconButton
+                    onClick={() => onView && onView(template)}
+                    size="small"
+                    color="primary"
+                    title="View template"
+                    sx={{
+                      bgcolor: 'grey.100',
+                      '&:hover': { bgcolor: 'grey.200' },
+                    }}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </IconButton>
+                </motion.div>
+              )}
+            </Box>
+
+            {/* Type Badge */}
+            {template.is_shared && (
+              <Chip
+                label="Read-only (Team Type)"
+                size="small"
+                variant="outlined"
+                sx={{
+                  height: 28,
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  borderColor: 'grey.300',
+                  color: 'text.secondary',
+                  borderRadius: 2,
+                }}
+              />
+            )}
+            {template.is_owner && template.shared_with_team && (
+              <Chip
+                label="Shared with Team"
+                size="small"
+                sx={{
+                  height: 28,
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  bgcolor: 'success.50',
+                  color: 'success.700',
+                  borderRadius: 2,
+                }}
+              />
+            )}
           </Box>
         </CardContent>
       </Card>

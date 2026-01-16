@@ -7,6 +7,7 @@ import { Template } from '../types/template';
 import { templatesService } from '../services/templatesService';
 import { TemplateList } from '../components/templates/TemplateList';
 import { TemplateBuilder } from '../components/templates/TemplateBuilder';
+import { TemplateViewModal } from '../components/templates/TemplateViewModal';
 import { useToast } from '../components/common/CustomToast';
 
 export const ReportTemplates: React.FC = () => {
@@ -15,6 +16,8 @@ export const ReportTemplates: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showBuilder, setShowBuilder] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<Template | undefined>(undefined);
+  const [viewingTemplate, setViewingTemplate] = useState<Template | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
 
   useEffect(() => {
     loadTemplates();
@@ -71,6 +74,22 @@ export const ReportTemplates: React.FC = () => {
   const handleCancel = () => {
     setShowBuilder(false);
     setEditingTemplate(undefined);
+  };
+
+  const handleView = async (template: Template) => {
+    try {
+      // Fetch full template details
+      const fullTemplate = await templatesService.getTemplateById(template.id);
+      setViewingTemplate(fullTemplate);
+      setShowViewModal(true);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to load template details');
+    }
+  };
+
+  const handleCloseViewModal = () => {
+    setShowViewModal(false);
+    setViewingTemplate(null);
   };
 
   return (
@@ -164,11 +183,19 @@ export const ReportTemplates: React.FC = () => {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onCreate={handleCreate}
+                onView={handleView}
               />
             )}
           </Box>
         </Container>
       </Box>
+
+      {/* View Modal for shared templates */}
+      <TemplateViewModal
+        open={showViewModal}
+        onClose={handleCloseViewModal}
+        template={viewingTemplate}
+      />
     </Layout>
   );
 };

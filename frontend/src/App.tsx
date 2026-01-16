@@ -11,6 +11,7 @@ import { AnalyzeCall } from './pages/AnalyzeCall';
 import { MyReports } from './pages/MyReports';
 import { Drafts } from './pages/Drafts';
 import { Teams } from './pages/Teams';
+import { TeamDashboard } from './pages/TeamDashboard';
 import { Settings } from './pages/Settings';
 import { AuthCallback } from './pages/AuthCallback';
 
@@ -79,6 +80,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <Teams />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Team Dashboard Route */}
+          <Route
+            path="/team-dashboard"
+            element={
+              <ProtectedRoute>
+                <TeamDashboard />
               </ProtectedRoute>
             }
           />

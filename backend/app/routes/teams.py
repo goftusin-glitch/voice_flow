@@ -1,8 +1,12 @@
 from flask import Blueprint, request, jsonify
 from app.middleware.auth_middleware import token_required
 from app.services.team_service import TeamService
-from app.models.team import TeamMember
+from app.models.team import TeamMember, Team
+from app.models.template import ReportTemplate
+from app.models.report import Report
+from app.models.user import User
 from app import db
+from sqlalchemy import func, or_
 
 teams_bp = Blueprint('teams', __name__)
 
@@ -490,4 +494,176 @@ def leave_team(current_user, team_id):
         return jsonify({
             'success': False,
             'message': 'Failed to leave team'
+        }), 500
+
+
+@teams_bp.route('/dashboard', methods=['GET'])
+@token_required
+def get_team_dashboard(current_user):
+    """Get team dashboard metrics and reports"""
+    try:
+        # Get user's team (the one they own or are a member of)
+        team = TeamService.get_user_team(current_user.id)
+        if not team:
+            return jsonify({
+                'success': False,
+                'message': 'User is not part of any team'
+            }), 404
+
+        # Get all team member IDs (including owner)
+        team_members = TeamMember.query.filter_by(team_id=team.id).all()
+        team_member_ids = [tm.user_id for tm in team_members]
+
+        # Count shared templates in the team
+        shared_template_count = ReportTemplate.query.filter(
+            ReportTemplate.team_id == team.id,
+            ReportTemplate.shared_with_team.is_(True),
+            ReportTemplate.is_active.is_(True)
+        ).count()
+
+        # Get shared template IDs for counting reports
+        shared_template_ids = [t.id for t in ReportTemplate.query.filter(
+            ReportTemplate.team_id == team.id,
+            ReportTemplate.shared_with_team.is_(True),
+            ReportTemplate.is_active.is_(True)
+        ).all()]
+
+        # Count reports created using shared templates
+        reports_using_shared_templates = 0
+        if shared_template_ids:
+            reports_using_shared_templates = Report.query.filter(
+                Report.template_id.in_(shared_template_ids),
+                Report.status == 'finalized'
+            ).count()
+
+        # Total team members count
+        total_team_members = len(team_members)
+
+        # Get all team reports (created by any team member)
+        # Owner sees all team member reports, members see only their own
+        is_owner = team.owner_id == current_user.id
+
+        metrics = {
+            'shared_template_count': shared_template_count,
+            'reports_using_shared_templates': reports_using_shared_templates,
+            'total_team_members': total_team_members,
+            'team_name': team.name,
+            'is_owner': is_owner
+        }
+
+        return jsonify({
+            'success': True,
+            'data': {'metrics': metrics}
+        }), 200
+
+    except Exception as e:
+        print(f"Error getting team dashboard: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to get team dashboard'
+        }), 500
+
+
+@teams_bp.route('/dashboard/reports', methods=['GET'])
+@token_required
+def get_team_dashboard_reports(current_user):
+    """Get team reports for the dashboard"""
+    try:
+        # Get pagination and filter params
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 20, type=int)
+        search = request.args.get('search', '', type=str)
+        template_id = request.args.get('template_id', None, type=int)
+
+        # Get user's team
+        team = TeamService.get_user_team(current_user.id)
+        if not team:
+            return jsonify({
+                'success': False,
+                'message': 'User is not part of any team'
+            }), 404
+
+        # Get all team member IDs
+        team_members = TeamMember.query.filter_by(team_id=team.id).all()
+        team_member_ids = [tm.user_id for tm in team_members]
+
+        # Build query - get reports from all team members
+        query = Report.query.filter(
+            Report.user_id.in_(team_member_ids),
+            Report.status == 'finalized'
+        )
+
+        # Apply search filter
+        if search:
+            query = query.filter(Report.title.ilike(f'%{search}%'))
+
+        # Apply template filter
+        if template_id:
+            query = query.filter(Report.template_id == template_id)
+
+        # Get total count
+        total = query.count()
+
+        # Get paginated results
+        reports = query.order_by(Report.created_at.desc()).paginate(
+            page=page, per_page=per_page, error_out=False
+        )
+
+        reports_list = []
+        for report in reports.items:
+            # Get template name
+            template = ReportTemplate.query.get(report.template_id)
+            template_name = template.name if template else 'Unknown'
+            template_shared = template.shared_with_team if template else False
+
+            # Get creator name
+            creator = User.query.get(report.user_id)
+            creator_name = f"{creator.first_name} {creator.last_name}" if creator else 'Unknown'
+
+            reports_list.append({
+                'id': report.id,
+                'title': report.title,
+                'summary': report.summary,
+                'template_id': report.template_id,
+                'template_name': template_name,
+                'template_shared': template_shared,
+                'created_by': report.user_id,
+                'created_by_name': creator_name,
+                'created_at': report.created_at.isoformat() if report.created_at else None,
+                'finalized_at': report.finalized_at.isoformat() if report.finalized_at else None,
+            })
+
+        # Get shared templates for filter dropdown
+        shared_templates = ReportTemplate.query.filter(
+            ReportTemplate.team_id == team.id,
+            ReportTemplate.shared_with_team.is_(True),
+            ReportTemplate.is_active.is_(True)
+        ).all()
+
+        templates_for_filter = [{
+            'id': t.id,
+            'name': t.name
+        } for t in shared_templates]
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'reports': reports_list,
+                'total': total,
+                'page': page,
+                'per_page': per_page,
+                'pages': reports.pages,
+                'templates': templates_for_filter
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"Error getting team reports: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': 'Failed to get team reports'
         }), 500

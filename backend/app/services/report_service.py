@@ -3,6 +3,7 @@ from app.models.report import Report, ReportFieldValue
 from app.models.analysis import CallAnalysis
 from app.models.template import ReportTemplate, TemplateField
 from app.models.user import User
+from app.models.team import Team
 from sqlalchemy import or_, and_
 from datetime import datetime
 
@@ -10,9 +11,31 @@ from datetime import datetime
 class ReportService:
     @staticmethod
     def get_reports(user_id, team_id, page=1, limit=20, search=None, status=None):
-        """Get all reports for a team with pagination and filters"""
+        """Get all reports for a team with pagination and filters
+
+        Visibility rules:
+        - Owner can see all reports (their own + all team members' reports)
+        - Team members can only see their own reports (not the owner's reports)
+        """
+        # Get the team to check ownership
+        team = Team.query.get(team_id)
+        if not team:
+            return {
+                'reports': [],
+                'total': 0,
+                'page': page,
+                'pages': 0
+            }
+
         # Start with base query for the team
         query = Report.query.filter_by(team_id=team_id)
+
+        # Apply visibility rules based on user role
+        is_owner = team.owner_id == user_id
+
+        if not is_owner:
+            # Team member can only see their own reports (not owner's reports)
+            query = query.filter(Report.user_id == user_id)
 
         # Apply status filter (default to finalized if not specified)
         if status:
@@ -254,11 +277,35 @@ class ReportService:
 
     @staticmethod
     def get_draft_reports(user_id, team_id, page=1, limit=20):
-        """Get all draft reports for a user"""
+        """Get all draft reports for a user
+
+        Visibility rules:
+        - Owner can see all drafts (their own + all team members' drafts)
+        - Team members can only see their own drafts
+        """
+        # Get the team to check ownership
+        team = Team.query.get(team_id)
+        if not team:
+            return {
+                'reports': [],
+                'total': 0,
+                'page': page,
+                'pages': 0
+            }
+
         query = Report.query.filter_by(
             team_id=team_id,
             status='draft'
-        ).order_by(Report.created_at.desc())
+        )
+
+        # Apply visibility rules based on user role
+        is_owner = team.owner_id == user_id
+
+        if not is_owner:
+            # Team member can only see their own drafts
+            query = query.filter(Report.user_id == user_id)
+
+        query = query.order_by(Report.created_at.desc())
 
         # Paginate
         total = query.count()

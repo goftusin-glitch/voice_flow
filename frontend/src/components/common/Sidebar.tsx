@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, FileText, Mic, Settings, FileStack, Users, X, BookmarkCheck } from 'lucide-react';
+import { LayoutDashboard, FileText, Mic, Settings, FileStack, Users, X, BookmarkCheck, BarChart3 } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,6 +16,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { path: '/reports', icon: FileText, label: 'My Reports' },
     { path: '/templates', icon: FileStack, label: 'Templates' },
     { path: '/teams', icon: Users, label: 'Team' },
+    { path: '/team-dashboard', icon: BarChart3, label: 'Team Dashboard' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 

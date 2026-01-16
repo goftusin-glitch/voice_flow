@@ -123,7 +123,8 @@ class TemplateService:
 
         result = []
         for template in all_templates:
-            template_dict = template.to_dict()
+            # Include fields in the list view for display
+            template_dict = template.to_dict(include_fields=True)
             # Add creator name
             creator = User.query.get(template.created_by)
             if creator:

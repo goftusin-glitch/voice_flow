@@ -11,6 +11,7 @@ interface TemplateListProps {
   onEdit: (template: Template) => void;
   onDelete: (templateId: number) => void;
   onCreate: () => void;
+  onView?: (template: Template) => void;
 }
 
 export const TemplateList: React.FC<TemplateListProps> = ({
@@ -19,6 +20,7 @@ export const TemplateList: React.FC<TemplateListProps> = ({
   onEdit,
   onDelete,
   onCreate,
+  onView,
 }) => {
   if (loading) {
     return (
@@ -92,6 +94,7 @@ export const TemplateList: React.FC<TemplateListProps> = ({
                 template={template}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onView={onView}
               />
             </Box>
           </Grow>

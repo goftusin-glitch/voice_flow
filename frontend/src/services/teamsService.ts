@@ -100,6 +100,33 @@ class TeamsService {
     }>('/teams/all-my-teams');
     return response.data.data.teams;
   }
+
+  async getTeamDashboard(): Promise<TeamDashboardMetrics> {
+    const response = await apiClient.get<{
+      success: boolean;
+      data: { metrics: TeamDashboardMetrics };
+    }>('/teams/dashboard');
+    return response.data.data.metrics;
+  }
+
+  async getTeamDashboardReports(params?: {
+    page?: number;
+    per_page?: number;
+    search?: string;
+    template_id?: number;
+  }): Promise<TeamDashboardReportsResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.per_page) queryParams.append('per_page', params.per_page.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.template_id) queryParams.append('template_id', params.template_id.toString());
+
+    const response = await apiClient.get<{
+      success: boolean;
+      data: TeamDashboardReportsResponse;
+    }>(`/teams/dashboard/reports?${queryParams.toString()}`);
+    return response.data.data;
+  }
 }
 
 export const teamsService = new TeamsService();
@@ -131,4 +158,34 @@ export interface UserTeam {
   role: string;
   is_owner: boolean;
   joined_at: string;
+}
+
+export interface TeamDashboardMetrics {
+  shared_template_count: number;
+  reports_using_shared_templates: number;
+  total_team_members: number;
+  team_name: string;
+  is_owner: boolean;
+}
+
+export interface TeamDashboardReport {
+  id: number;
+  title: string;
+  summary: string;
+  template_id: number;
+  template_name: string;
+  template_shared: boolean;
+  created_by: number;
+  created_by_name: string;
+  created_at: string;
+  finalized_at: string;
+}
+
+export interface TeamDashboardReportsResponse {
+  reports: TeamDashboardReport[];
+  total: number;
+  page: number;
+  per_page: number;
+  pages: number;
+  templates: { id: number; name: string }[];
 }
