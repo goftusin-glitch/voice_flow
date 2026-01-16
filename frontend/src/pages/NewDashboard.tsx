@@ -4,6 +4,7 @@ import { Layout } from '../components/common/Layout';
 import { MultiInputComponent } from '../components/dashboard/MultiInputComponent';
 import { DraftsTable } from '../components/dashboard/DraftsTable';
 import { InlineDraftEditor } from '../components/dashboard/InlineDraftEditor';
+import { DraftEditModal } from '../components/drafts/DraftEditModal';
 import { AlertCircle, Plus, Search, ChevronDown } from 'lucide-react';
 import { useToast } from '../components/common/CustomToast';
 import { useAuth } from '../context/AuthContext';
@@ -11,6 +12,7 @@ import { templatesService } from '../services/templatesService';
 import { unifiedDashboardService, CreateReportResponse, FieldValue } from '../services/unifiedDashboardService';
 import { reportsService } from '../services/reportsService';
 import { dashboardService } from '../services/dashboardService';
+import { Report } from '../types/report';
 
 interface Template {
   id: number;
@@ -50,6 +52,10 @@ export const NewDashboard: React.FC = () => {
 
   // State for inline draft editing
   const [currentDraft, setCurrentDraft] = useState<CreateReportResponse | null>(null);
+
+  // State for edit modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedDraft, setSelectedDraft] = useState<Report | null>(null);
 
   useEffect(() => {
     loadTemplates();
@@ -157,7 +163,7 @@ export const NewDashboard: React.FC = () => {
     }
   };
 
-  const handleImageSelected = async (imageFile: File) => {
+  const handleAudioFileSelected = async (audioFile: File) => {
     if (!selectedTemplate) {
       toast.error('Please select a report template first');
       return;
@@ -165,14 +171,14 @@ export const NewDashboard: React.FC = () => {
 
     try {
       setLoading(true);
-      toast.info('Processing image...');
+      toast.info('Processing audio file...');
 
-      const result = await unifiedDashboardService.createReportFromImage(
+      const result = await unifiedDashboardService.createReportFromAudio(
         selectedTemplate,
-        imageFile
+        audioFile
       );
 
-      toast.success('Report created from image!');
+      toast.success('Report created from audio!');
 
       // Show inline draft editor instead of navigating
       setCurrentDraft(result);
@@ -180,15 +186,38 @@ export const NewDashboard: React.FC = () => {
       // Reload drafts and metrics
       await Promise.all([loadDrafts(), loadMetrics()]);
     } catch (error: any) {
-      console.error('Failed to create report from image:', error);
-      toast.error(error.response?.data?.message || 'Failed to process image');
+      console.error('Failed to create report from audio:', error);
+      toast.error(error.response?.data?.message || 'Failed to process audio');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditDraft = (draftId: number) => {
-    navigate(`/drafts?edit=${draftId}`);
+  const handleEditDraft = async (draftId: number) => {
+    try {
+      const fullReport = await reportsService.getReportById(draftId);
+      setSelectedDraft(fullReport);
+      setShowEditModal(true);
+    } catch (error: any) {
+      console.error('Failed to load draft:', error);
+      toast.error(error.response?.data?.message || 'Failed to load draft');
+    }
+  };
+
+  const handleEditModalClose = () => {
+    setShowEditModal(false);
+    setSelectedDraft(null);
+  };
+
+  const handleEditModalUpdate = async () => {
+    await Promise.all([loadDrafts(), loadMetrics()]);
+    handleEditModalClose();
+  };
+
+  const handleEditModalFinalize = async () => {
+    await Promise.all([loadDrafts(), loadMetrics()]);
+    handleEditModalClose();
+    toast.success('Report finalized successfully!');
   };
 
   // Inline draft editor handlers
@@ -354,7 +383,7 @@ export const NewDashboard: React.FC = () => {
           <MultiInputComponent
             onTextInput={setTextInput}
             onAudioRecorded={handleAudioRecorded}
-            onImageSelected={handleImageSelected}
+            onAudioFileSelected={handleAudioFileSelected}
             disabled={loading}
           />
         </div>
@@ -445,6 +474,17 @@ export const NewDashboard: React.FC = () => {
           loading={draftsLoading}
         />
       </div>
+
+      {/* Edit Modal */}
+      {showEditModal && selectedDraft && (
+        <DraftEditModal
+          open={showEditModal}
+          onClose={handleEditModalClose}
+          draft={selectedDraft}
+          onUpdate={handleEditModalUpdate}
+          onFinalize={handleEditModalFinalize}
+        />
+      )}
     </Layout>
   );
 };

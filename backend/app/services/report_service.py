@@ -39,6 +39,11 @@ class ReportService:
             creator = User.query.get(report.user_id)
 
             report_dict = report.to_dict()
+            report_dict['template'] = {
+                'id': template.id,
+                'name': template.name,
+                'description': template.description
+            } if template else None
             report_dict['template_name'] = template.name if template else 'Unknown'
             report_dict['created_by'] = f"{creator.first_name} {creator.last_name}" if creator else 'Unknown'
 

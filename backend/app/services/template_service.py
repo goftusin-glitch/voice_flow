@@ -13,11 +13,22 @@ class TemplateService:
         # Check if user owns a team
         team = Team.query.filter_by(owner_id=user_id).first()
 
-        if not team:
+        if team:
+            print(f"[DEBUG] User {user_id} owns team {team.id} ({team.name})")
+        else:
+            # Check all team memberships for debugging
+            all_memberships = TeamMember.query.filter_by(user_id=user_id).all()
+            print(f"[DEBUG] User {user_id} has {len(all_memberships)} team memberships")
+            for m in all_memberships:
+                print(f"[DEBUG]   - team_id={m.team_id}, role={m.role}")
+
             # Check if user is a member of a team
             team_member = TeamMember.query.filter_by(user_id=user_id).first()
             if team_member:
                 team = Team.query.get(team_member.team_id)
+                print(f"[DEBUG] User {user_id} is member of team {team.id} ({team.name}) with role {team_member.role}")
+            else:
+                print(f"[DEBUG] User {user_id} has no team membership")
 
         return team
 
@@ -47,9 +58,33 @@ class TemplateService:
         return team
 
     @staticmethod
+    def get_all_user_team_ids(user_id):
+        """Get all team IDs the user is part of (owned + member of)"""
+        team_ids = set()
+
+        # Get team the user owns
+        owned_team = Team.query.filter_by(owner_id=user_id).first()
+        if owned_team:
+            team_ids.add(owned_team.id)
+
+        # Get all teams user is a member of
+        memberships = TeamMember.query.filter_by(user_id=user_id).all()
+        for membership in memberships:
+            team_ids.add(membership.team_id)
+
+        return list(team_ids)
+
+    @staticmethod
     def get_all_templates(user_id):
-        """Get all templates for user - own templates + shared templates from team members"""
+        """Get all templates for user - own templates + shared templates from ALL teams"""
+        # Ensure user has at least one team
         team = TemplateService.get_or_create_team(user_id)
+
+        # Get ALL teams the user is part of
+        all_team_ids = TemplateService.get_all_user_team_ids(user_id)
+
+        print(f"[DEBUG] get_all_templates called for user_id={user_id}")
+        print(f"[DEBUG] User is part of teams: {all_team_ids}")
 
         # Get user's own templates
         own_templates = ReportTemplate.query.filter_by(
@@ -59,15 +94,28 @@ class TemplateService:
             joinedload(ReportTemplate.fields)
         ).order_by(desc(ReportTemplate.created_at)).all()
 
-        # Get templates shared by other team members
+        print(f"[DEBUG] Found {len(own_templates)} own templates for user {user_id}")
+
+        # Get templates shared by other team members from ALL teams user is part of
+        # Use .is_(True) for proper boolean comparison in SQLAlchemy with MySQL
         shared_templates = ReportTemplate.query.filter(
-            ReportTemplate.team_id == team.id,
+            ReportTemplate.team_id.in_(all_team_ids),
             ReportTemplate.created_by != user_id,
-            ReportTemplate.shared_with_team == True,
-            ReportTemplate.is_active == True
+            ReportTemplate.shared_with_team.is_(True),
+            ReportTemplate.is_active.is_(True)
         ).options(
             joinedload(ReportTemplate.fields)
         ).order_by(desc(ReportTemplate.created_at)).all()
+
+        print(f"[DEBUG] Found {len(shared_templates)} shared templates from all teams")
+
+        # Debug: show all templates in user's teams
+        all_team_templates = ReportTemplate.query.filter(
+            ReportTemplate.team_id.in_(all_team_ids),
+            ReportTemplate.is_active.is_(True)
+        ).all()
+        for t in all_team_templates:
+            print(f"[DEBUG] Team template: id={t.id}, name={t.name}, created_by={t.created_by}, shared={t.shared_with_team}, team_id={t.team_id}")
 
         # Combine and remove duplicates (prioritize own templates)
         own_ids = {t.id for t in own_templates}
@@ -92,9 +140,10 @@ class TemplateService:
     @staticmethod
     def get_template_by_id(template_id, user_id):
         """Get a specific template by ID"""
-        team = TemplateService.get_user_team(user_id)
+        # Get all teams the user is part of
+        all_team_ids = TemplateService.get_all_user_team_ids(user_id)
 
-        if not team:
+        if not all_team_ids:
             raise ValueError("User is not part of any team")
 
         # First check if user owns the template
@@ -106,13 +155,13 @@ class TemplateService:
             joinedload(ReportTemplate.fields)
         ).first()
 
-        # If not, check if it's a shared template from the team
+        # If not, check if it's a shared template from any of the user's teams
         if not template:
             template = ReportTemplate.query.filter(
                 ReportTemplate.id == template_id,
-                ReportTemplate.team_id == team.id,
-                ReportTemplate.shared_with_team == True,
-                ReportTemplate.is_active == True
+                ReportTemplate.team_id.in_(all_team_ids),
+                ReportTemplate.shared_with_team.is_(True),
+                ReportTemplate.is_active.is_(True)
             ).options(
                 joinedload(ReportTemplate.fields)
             ).first()
@@ -179,15 +228,17 @@ class TemplateService:
     @staticmethod
     def update_template(template_id, user_id, name=None, description=None, fields=None, shared_with_team=None):
         """Update an existing template"""
-        team = TemplateService.get_user_team(user_id)
+        # Get all teams the user is part of
+        all_team_ids = TemplateService.get_all_user_team_ids(user_id)
 
-        if not team:
+        if not all_team_ids:
             raise ValueError("User is not part of any team")
 
-        template = ReportTemplate.query.filter_by(
-            id=template_id,
-            team_id=team.id,
-            is_active=True
+        # Find the template in any of the user's teams
+        template = ReportTemplate.query.filter(
+            ReportTemplate.id == template_id,
+            ReportTemplate.team_id.in_(all_team_ids),
+            ReportTemplate.is_active.is_(True)
         ).first()
 
         if not template:
@@ -234,15 +285,17 @@ class TemplateService:
     @staticmethod
     def delete_template(template_id, user_id):
         """Delete a template (soft delete)"""
-        team = TemplateService.get_user_team(user_id)
+        # Get all teams the user is part of
+        all_team_ids = TemplateService.get_all_user_team_ids(user_id)
 
-        if not team:
+        if not all_team_ids:
             raise ValueError("User is not part of any team")
 
-        template = ReportTemplate.query.filter_by(
-            id=template_id,
-            team_id=team.id,
-            is_active=True
+        # Find the template in any of the user's teams
+        template = ReportTemplate.query.filter(
+            ReportTemplate.id == template_id,
+            ReportTemplate.team_id.in_(all_team_ids),
+            ReportTemplate.is_active.is_(True)
         ).first()
 
         if not template:

@@ -5,7 +5,7 @@ import { useToast } from '../common/CustomToast';
 interface MultiInputComponentProps {
   onTextInput: (text: string) => void;
   onAudioRecorded: (audioBlob: Blob, audioFile: File) => void;
-  onImageSelected: (imageFile: File) => void;
+  onAudioFileSelected: (audioFile: File) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -13,7 +13,7 @@ interface MultiInputComponentProps {
 export const MultiInputComponent: React.FC<MultiInputComponentProps> = ({
   onTextInput,
   onAudioRecorded,
-  onImageSelected,
+  onAudioFileSelected,
   disabled = false,
   placeholder = 'Tap mic, camera, or type here...',
 }) => {
@@ -115,11 +115,11 @@ export const MultiInputComponent: React.FC<MultiInputComponentProps> = ({
   const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type.startsWith('image/')) {
-        onImageSelected(file);
-        toast.success('Image captured');
+      if (file.type.startsWith('audio/')) {
+        onAudioFileSelected(file);
+        toast.success('Audio file selected');
       } else {
-        toast.error('Please select an image file');
+        toast.error('Please select an audio file');
       }
     }
     // Reset input
@@ -129,11 +129,11 @@ export const MultiInputComponent: React.FC<MultiInputComponentProps> = ({
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type.startsWith('image/')) {
-        onImageSelected(file);
-        toast.success('Image uploaded');
+      if (file.type.startsWith('audio/') || file.name.match(/\.(mp3|wav|ogg|m4a|flac|webm|aac|wma|opus)$/i)) {
+        onAudioFileSelected(file);
+        toast.success('Audio file uploaded');
       } else {
-        toast.error('Please upload an image file');
+        toast.error('Please upload an audio file');
       }
     }
     // Reset input
@@ -201,7 +201,7 @@ export const MultiInputComponent: React.FC<MultiInputComponentProps> = ({
                 ? 'opacity-50 cursor-not-allowed'
                 : 'hover:bg-orange-600 hover:scale-110'
             } shadow-lg`}
-            title="Upload image"
+            title="Upload audio file"
           >
             <Upload className="w-6 h-6 text-white" />
           </button>
@@ -210,15 +210,14 @@ export const MultiInputComponent: React.FC<MultiInputComponentProps> = ({
           <input
             ref={cameraInputRef}
             type="file"
-            accept="image/*"
-            capture="environment"
+            accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.webm,.aac,.wma,.opus,.amr,.3gp"
             onChange={handleCameraCapture}
             className="hidden"
           />
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.webm,.aac,.wma,.opus,.amr,.3gp"
             onChange={handleFileUpload}
             className="hidden"
           />
