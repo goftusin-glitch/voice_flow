@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { FileText, Eye, Download, Mail, Trash2, Clock, User, FileSpreadsheet, Edit3 } from 'lucide-react';
+import { FileText, Eye, Download, Share2, Trash2, Clock, User, FileSpreadsheet, Edit3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Report, ReportFieldValue } from '../../types/report';
 
@@ -9,8 +9,7 @@ interface ReportsTableProps {
   onEdit?: (reportId: number) => void;
   onDownloadPDF: (reportId: number) => void;
   onDownloadExcel?: (reportId: number) => void;
-  onShareEmail: (report: Report) => void;
-  onShareWhatsApp: (reportId: number) => void;
+  onShare: (report: Report) => void;
   onDelete: (reportId: number) => void;
   onBatchDelete?: (reportIds: number[]) => void;
   loading?: boolean;
@@ -22,8 +21,7 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
   onEdit,
   onDownloadPDF,
   onDownloadExcel,
-  onShareEmail,
-  onShareWhatsApp,
+  onShare,
   onDelete,
   onBatchDelete,
   loading = false,
@@ -237,11 +235,11 @@ export const ReportsTable: React.FC<ReportsTableProps> = ({
                       </button>
                     )}
                     <button
-                      onClick={() => onShareEmail(report)}
+                      onClick={() => onShare(report)}
                       className="text-purple-600 hover:text-purple-900 p-1.5 hover:bg-purple-50 rounded transition-colors"
-                      title="Share via email (with PDF)"
+                      title="Share report"
                     >
-                      <Mail className="w-4 h-4" />
+                      <Share2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => onDownloadPDF(report.id)}

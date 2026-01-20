@@ -585,6 +585,54 @@ View full report with PDF attachment.
         }), 500
 
 
+@reports_bp.route('/<int:report_id>/share-link', methods=['GET'])
+@token_required
+def get_share_link(current_user, report_id):
+    """Get shareable link for a report"""
+    try:
+        # Get the report first to check its team
+        from app.models.report import Report
+        from flask import current_app
+        report = Report.query.get(report_id)
+
+        if not report:
+            raise ValueError("Report not found")
+
+        # Check if user is a member of the report's team
+        member = TeamMember.query.filter_by(
+            user_id=current_user.id,
+            team_id=report.team_id
+        ).first()
+
+        if not member:
+            raise ValueError("You don't have access to this report")
+
+        # Generate shareable link
+        # In production, you might want to use a short URL service or create a public viewing page
+        frontend_url = current_app.config.get('FRONTEND_URL', 'http://localhost:5173')
+        share_url = f"{frontend_url}/reports?view={report_id}"
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'share_url': share_url,
+                'report_title': report.title
+            }
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 404
+    except Exception as e:
+        print(f"Error generating share link: {str(e)}")
+        return jsonify({
+            'success': False,
+            'message': 'Failed to generate share link'
+        }), 500
+
+
 @reports_bp.route('/create-from-input', methods=['POST'])
 @token_required
 def create_from_input(current_user):

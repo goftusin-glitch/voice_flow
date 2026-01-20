@@ -108,6 +108,13 @@ class ReportsService {
     return response.data.data;
   }
 
+  async getShareableLink(reportId: number): Promise<{ share_url: string }> {
+    const response = await apiClient.get<{ success: boolean; data: { share_url: string } }>(
+      `/reports/${reportId}/share-link`
+    );
+    return response.data.data;
+  }
+
   async getDrafts(page = 1, limit = 20): Promise<ReportsListResponse> {
     const params = new URLSearchParams();
     params.append('page', page.toString());

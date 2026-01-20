@@ -7,7 +7,6 @@ import { ReportsTable } from '../components/reports/ReportsTable';
 import { Search, ChevronDown, Users, FileText, CheckCircle2, Filter } from 'lucide-react';
 import { useToast } from '../components/common/CustomToast';
 import { ReportViewModal } from '../components/reports/ReportViewModal';
-import { ShareModal } from '../components/reports/ShareModal';
 
 export const MyReports: React.FC = () => {
   const toast = useToast();
@@ -21,7 +20,6 @@ export const MyReports: React.FC = () => {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [teams, setTeams] = useState<UserTeam[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<UserTeam | null>(null);
   const [showTeamDropdown, setShowTeamDropdown] = useState(false);
@@ -129,17 +127,32 @@ export const MyReports: React.FC = () => {
     }
   };
 
-  const handleShareEmail = (report: Report) => {
-    setSelectedReport(report);
-    setShowShareModal(true);
-  };
-
-  const handleShareWhatsApp = async (reportId: number) => {
+  const handleShare = async (report: Report) => {
     try {
-      const response = await reportsService.getWhatsAppShareLink(reportId);
-      window.open(response.whatsapp_url, '_blank');
+      // Get the shareable link for the report
+      const response = await reportsService.getShareableLink(report.id);
+      const shareUrl = response.share_url;
+      const reportTitle = report.title || 'Report';
+
+      // Check if Web Share API is available
+      if (navigator.share) {
+        await navigator.share({
+          title: reportTitle,
+          text: `Check out this report: ${reportTitle}`,
+          url: shareUrl,
+        });
+        toast.success('Report shared successfully');
+      } else {
+        // Fallback: Copy link to clipboard
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copied to clipboard');
+      }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create WhatsApp link');
+      // User cancelled the share or an error occurred
+      if (error.name !== 'AbortError') {
+        console.error('Share failed:', error);
+        toast.error(error.response?.data?.message || 'Failed to share report');
+      }
     }
   };
 
@@ -327,8 +340,7 @@ export const MyReports: React.FC = () => {
           onEdit={handleEditReport}
           onDownloadPDF={handleDownloadPDF}
           onDownloadExcel={handleDownloadExcel}
-          onShareEmail={handleShareEmail}
-          onShareWhatsApp={handleShareWhatsApp}
+          onShare={handleShare}
           onDelete={handleDeleteReport}
           onBatchDelete={handleBatchDeleteReports}
           loading={loading}
@@ -412,16 +424,6 @@ export const MyReports: React.FC = () => {
             }}
             onUpdate={() => loadReports()}
             startInEditMode={true}
-          />
-        )}
-
-        {showShareModal && selectedReport && (
-          <ShareModal
-            report={selectedReport}
-            onClose={() => {
-              setShowShareModal(false);
-              setSelectedReport(null);
-            }}
           />
         )}
       </div>
