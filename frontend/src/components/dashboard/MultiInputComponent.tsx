@@ -6,6 +6,7 @@ interface MultiInputComponentProps {
   onTextInput: (text: string) => void;
   onAudioRecorded: (audioBlob: Blob, audioFile: File) => void;
   onAudioFileSelected: (audioFile: File) => void;
+  onImageFileSelected?: (imageFile: File) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -14,6 +15,7 @@ export const MultiInputComponent: React.FC<MultiInputComponentProps> = ({
   onTextInput,
   onAudioRecorded,
   onAudioFileSelected,
+  onImageFileSelected,
   disabled = false,
   placeholder = 'Tap mic, camera, or type here...',
 }) => {
@@ -115,11 +117,15 @@ export const MultiInputComponent: React.FC<MultiInputComponentProps> = ({
   const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type.startsWith('audio/')) {
-        onAudioFileSelected(file);
-        toast.success('Audio file selected');
+      if (file.type.startsWith('image/')) {
+        if (onImageFileSelected) {
+          onImageFileSelected(file);
+          toast.success('Image file selected');
+        } else {
+          toast.error('Image upload is not supported');
+        }
       } else {
-        toast.error('Please select an audio file');
+        toast.error('Please select an image file');
       }
     }
     // Reset input
@@ -210,7 +216,7 @@ export const MultiInputComponent: React.FC<MultiInputComponentProps> = ({
           <input
             ref={cameraInputRef}
             type="file"
-            accept="audio/*,.mp3,.wav,.ogg,.m4a,.flac,.webm,.aac,.wma,.opus,.amr,.3gp"
+            accept="image/*,.jpg,.jpeg,.png,.gif,.webp,.bmp,.svg,.heic,.heif,.tiff,.tif"
             onChange={handleCameraCapture}
             className="hidden"
           />

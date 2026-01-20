@@ -193,6 +193,36 @@ export const NewDashboard: React.FC = () => {
     }
   };
 
+  const handleImageFileSelected = async (imageFile: File) => {
+    if (!selectedTemplate) {
+      toast.error('Please select a report template first');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      toast.info('Processing image file...');
+
+      const result = await unifiedDashboardService.createReportFromImage(
+        selectedTemplate,
+        imageFile
+      );
+
+      toast.success('Report created from image!');
+
+      // Show inline draft editor instead of navigating
+      setCurrentDraft(result);
+
+      // Reload drafts and metrics
+      await Promise.all([loadDrafts(), loadMetrics()]);
+    } catch (error: any) {
+      console.error('Failed to create report from image:', error);
+      toast.error(error.response?.data?.message || 'Failed to process image');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleEditDraft = async (draftId: number) => {
     try {
       const fullReport = await reportsService.getReportById(draftId);
@@ -384,6 +414,7 @@ export const NewDashboard: React.FC = () => {
             onTextInput={setTextInput}
             onAudioRecorded={handleAudioRecorded}
             onAudioFileSelected={handleAudioFileSelected}
+            onImageFileSelected={handleImageFileSelected}
             disabled={loading}
           />
         </div>
