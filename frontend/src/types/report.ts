@@ -38,6 +38,7 @@ export interface Report {
   finalized_at?: string;
   template_name?: string;
   created_by?: string | ReportCreator;
+  created_by_name?: string;
   template?: ReportTemplate;
   field_values?: ReportFieldValue[];
   custom_fields?: CustomField[];
