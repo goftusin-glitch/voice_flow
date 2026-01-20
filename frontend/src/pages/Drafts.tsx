@@ -124,9 +124,11 @@ export const Drafts: React.FC = () => {
     title: draft.title,
     template_name: draft.template_name || draft.template?.name || 'Unknown',
     created_by_name:
-      typeof draft.created_by === 'string'
+      draft.created_by_name ||
+      (typeof draft.created_by === 'string'
         ? draft.created_by
-        : draft.created_by?.name || 'Unknown',
+        : draft.created_by?.name) ||
+      'Unknown',
     created_at: draft.created_at,
     updated_at: draft.updated_at,
     summary: draft.summary,
